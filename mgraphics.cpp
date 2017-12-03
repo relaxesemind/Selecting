@@ -12,6 +12,7 @@
 #include <cmath>
 #include <random>
 #include <chrono>
+#include <QFloat16>
 
 const int SLIDER_X_POS = 8;
 const int SLIDER_Y_POS = 8;
@@ -115,8 +116,8 @@ void MGraphics::load_from_file(const QString& path)//FINAL
     PXtoNull(std::move(randItem));
 
     pm.load(path);
-    sourceItem_from_image = std::make_unique<QGraphicsPixmapItem> (pm);
-    scene.addItem(sourceItem_from_image.get());
+
+    newPX(std::move(sourceItem_from_image),pm);
     MGraphics::centerOn(sourceItem_from_image.get());
     MGraphics::fitInView(sourceItem_from_image.get(),Qt::KeepAspectRatio);
     update();
@@ -131,13 +132,11 @@ void MGraphics::OSlider_Change(int value)//FINAL
     }
 }
 
-uchar toGrayScale(const QImage& image,int x ,int y)
+uint toGrayScale(const QImage& image,int x ,int y)
 {//I = 0.2125R + 0.7154G + 0.0721B)
     QRgb q = image.pixel(x,y);
-    float temp = static_cast<float> (qRed(q)) * 0.212F
-              + static_cast<float> (qGreen(q)) * 0.715F
-              + static_cast<float> (qBlue(q)) * 0.0721F;
-    return static_cast<uchar> (temp);
+    qfloat16 half_precision = qRed(q) * 0.212F + qGreen(q) * 0.715F + qBlue(q) * 0.0721F;
+    return static_cast<uint> (half_precision);
 }
 
 QImage Bradley_Rot(const QImage& src)
@@ -181,7 +180,8 @@ QImage Bradley_Rot(const QImage& src)
             //S(x, y) = S(A) + S(D) – S(B) – S(C)
             long sum = integral_image[y2][x2] - integral_image[y1][x2]
                     - integral_image[y2][x1] + integral_image[y1][x1];
-            if (toGrayScale(src,x,y) * count < sum * (1.0F - t))
+            if (long(toGrayScale(src,x,y) * count)
+                    < long(sum * (1.0F - t)))
             {
                 ret_img.setPixel(x,y,BIN_BLACK);
             }else
@@ -203,8 +203,9 @@ QImage threshold_img(const QImage& source_img, int threshold_value)
     for (int i = 0;i < w; ++i)
       for(int j = 0;j < h; ++j)
       {
-         QRgb _P = source_img.pixel(i,j);
-         if (qRed(_P) + qGreen(_P) + qBlue(_P) >= threshold_value * 3)
+         QRgb p = source_img.pixel(i,j);
+         if (qRed(p) + qGreen(p) + qBlue(p)
+                 >= threshold_value * 3)
           {
               ret_img.setPixel(i,j,BIN_WHITE);
           }else{
@@ -212,6 +213,42 @@ QImage threshold_img(const QImage& source_img, int threshold_value)
           }
       }
     return ret_img; //is std::move(ret_img);
+}
+
+QImage fast_threshold(const QImage& img, int threshold_value)
+{
+    // QImage::Format_RGB32:
+    // QImage::Format_ARGB32:
+    // QImage::Format_ARGB32_Premultiplied:
+
+    QImage retImg(img.width(),img.height(),img.format());
+    quint8 const max = 0xFF;
+    quint8 const min = 0x0;
+    quint32 const w = 4 * img.width();
+    quint32 const h = 4 * img.height();
+    quint64 const size = w * h;
+    quint8 const* data = img.constBits();
+    quint8* result = new quint8 [size];
+    //format #AARRGGBB
+
+    for (quint64 i = 0; i < size; i += 4)
+    {
+       if (data[i+1] + data[i+2] + data[i+3]
+             >= threshold_value * 3)
+       {
+           result[i] = max;
+           result[i+1] = max;
+           result[i+2] = max;
+           result[i+3] = max;
+       }else
+       {
+           result[i] = max;
+           result[i+1] = min;
+           result[i+2] = min;
+           result[i+3] = min;
+       }
+    }
+   return retImg.fromData(result,static_cast<int>(size));
 }
 
 void MGraphics::Slider_Change(int value)//threshold
@@ -232,7 +269,7 @@ void MGraphics::Slider_Release()
 
 inline bool MGraphics::on_img(int x,int y)//return true if (x,y) is pixmap point
 {
-    return bool (!((x < 0)||(y < 0)||(x + 1 > (int) pm.width())||(y + 1 > (int) pm.height())));
+    return bool (!((x < 0)||(y < 0)||(x + 1 > pm.width())||(y + 1 > pm.height())));
 }
 
 void MGraphics::ObjectsColorChange(QColor col)
@@ -274,12 +311,13 @@ void MGraphics::ShowObjectUnderCursor(QMouseEvent *event)
 
 
 }
-void MGraphics::PXtoNull(pItem&& item)
-{
+bool MGraphics::PXtoNull(pItem&& item)
+{//return true if item was 0 before call
     if (item)
     {
         item = nullptr;
-    }
+        return false;
+    } else return true;
 }
 
 void MGraphics::newPX(pItem&& item,const QPixmap& pix)
@@ -288,7 +326,7 @@ void MGraphics::newPX(pItem&& item,const QPixmap& pix)
     scene.addItem(item.get());
     if (item == titem)
     {
-        item->setOpacity(OSlider->value());
+        item->setOpacity(static_cast<qreal>(OSlider->value()));
     }
     update();
 }
@@ -299,7 +337,7 @@ void MGraphics::newPX(pItem&& item,const QImage& img)
     scene.addItem(item.get());
     if (item == titem)
     {
-        item->setOpacity(OSlider->value());
+        item->setOpacity(static_cast<qreal>(OSlider->value()));
     }
     update();
 }
@@ -310,7 +348,7 @@ void MGraphics::newPX(pItem&& item, QImage&& img)
     scene.addItem(item.get());
     if (item == titem)
     {
-        item->setOpacity(OSlider->value());
+        item->setOpacity(static_cast<qreal>(OSlider->value()));
     }
     update();
 }
@@ -383,7 +421,7 @@ void MGraphics::mousePressEvent(QMouseEvent *event)
     }
 }
 
-QVector<QPoint> get_prime(int R)
+auto get_prime(int R)
 {
    QVector<QPoint> res;
    for (int y = -R; y < R; ++y)
@@ -442,7 +480,7 @@ const QRgb black = qRgb(0,0,0);
 
 inline bool isBlack(int x, int y, const QImage& im)
 {
-    return (im.pixel(x,y) == black);
+    return im.pixel(x,y) == black;
 }
 
 void fill_area(QImage& img, QPoint Start_point)
@@ -487,8 +525,8 @@ QPoint getStartPoint(const QImage& img, QPoint CenterMass)
 QPoint MGraphics::drawCurve_andGetCenter(QImage& img)
 {
     int N = 0;
-    qreal avgX = 0.0;
-    qreal avgY = 0.0;
+    qreal avgX = 0.0F;
+    qreal avgY = 0.0F;
     while (!line_items.empty())//size line_items == size lines
     {
         //reWrite bin image
@@ -616,10 +654,9 @@ void MGraphics::RandomColorize()
         {
             mask.setPixel(p,ARGB_A + objColor);
         }
-        objColor = BIN_BLACK;
         for (const QPoint& p : obj.CPoints)
         {
-            mask.setPixel(p,ARGB_A + objColor);
+            mask.setPixel(p,ARGB_A + BIN_BLACK);
         }
     }
     newPX(std::move(randItem),std::move(mask));

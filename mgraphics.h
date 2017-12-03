@@ -68,7 +68,7 @@ private:
   bool decide_to_draw(QPoint);
   bool dataIsReady();
   bool isCorrectRelease(QMouseEvent*);
-  void PXtoNull(pItem&&);
+  bool PXtoNull(pItem&&);
   void newPX(pItem&&,const QPixmap&);
   void newPX(pItem&&,const QImage&);
   void newPX(pItem&&,QImage&&);
