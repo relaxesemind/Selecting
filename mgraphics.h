@@ -69,6 +69,9 @@ private:
   bool dataIsReady();
   bool isCorrectRelease(QMouseEvent*);
   void PXtoNull(pItem&&);
+  void newPX(pItem&&,const QPixmap&);
+  void newPX(pItem&&,const QImage&);
+  void newPX(pItem&&,QImage&&);
 
   int thickness_pen;
   char cursor_mode; //0 - view(nothing), 1 - draw, 2 - erase

@@ -68,6 +68,7 @@ MGraphics::MGraphics():thickness_pen(2), cursor_mode(0),drawingFlag(false),Color
 
     OSlider->setMaximum(100);
     OSlider->setMinimum(0);
+    OSlider->setValue(100);
     Slider->setMaximum(255);
     Slider->setMinimum(0);
 
@@ -109,9 +110,9 @@ void MGraphics::setCursor_mode(char mode)
 
 void MGraphics::load_from_file(const QString& path)//FINAL
 {
-    if (titem) scene.removeItem(titem.get());
-    if (track_item)scene.removeItem(track_item.get());
-    if (randItem) scene.removeItem(randItem.get());
+    PXtoNull(std::move(titem));
+    PXtoNull(std::move(track_item));
+    PXtoNull(std::move(randItem));
 
     pm.load(path);
     sourceItem_from_image = std::make_unique<QGraphicsPixmapItem> (pm);
@@ -225,16 +226,12 @@ void MGraphics::Slider_Release()
     Ctrl_Y.clear();
 
     b_img = threshold_img(pm.toImage(),Slider->value());
-    titem = std::make_unique<PXitem>
-            (QPixmap::fromImage(b_img));
-    scene.addItem(titem.get());
-    update();
+    newPX(std::move(titem),b_img);
+
 }
 
 inline bool MGraphics::on_img(int x,int y)//return true if (x,y) is pixmap point
 {
-    //bool res = (x < 0)||(y < 0)||(x + 1 > (int) pm.width())||(y + 1 > (int) pm.height());
-   // return !res;
     return bool (!((x < 0)||(y < 0)||(x + 1 > (int) pm.width())||(y + 1 > (int) pm.height())));
 }
 
@@ -269,14 +266,13 @@ void MGraphics::ShowObjectUnderCursor(QMouseEvent *event)
             for (const auto& p : data_obj[id - 1].Points) {
                track.setPixel(p,ColorObj.rgb());
              }
-            track_item = std::make_unique<PXitem>
-                    (QPixmap::fromImage(std::move(track)));
-            scene.addItem(track_item.get());
-            update();
+            newPX(std::move(track_item),std::move(track));
             QToolTip::showText(event->globalPos(),QString ("id = " + QString::number(data_01[y][x])));
         }else QToolTip::showText(event->globalPos(),QString("(" + QString::number(x) +
                                                             "," + QString::number(y) + ")"));
     }
+
+
 }
 void MGraphics::PXtoNull(pItem&& item)
 {
@@ -284,6 +280,39 @@ void MGraphics::PXtoNull(pItem&& item)
     {
         item = nullptr;
     }
+}
+
+void MGraphics::newPX(pItem&& item,const QPixmap& pix)
+{
+    item = std::make_unique<MGraphics::PXitem> (pix);
+    scene.addItem(item.get());
+    if (item == titem)
+    {
+        item->setOpacity(OSlider->value());
+    }
+    update();
+}
+void MGraphics::newPX(pItem&& item,const QImage& img)
+{
+    item = std::make_unique<MGraphics::PXitem>
+            (QPixmap::fromImage(img));
+    scene.addItem(item.get());
+    if (item == titem)
+    {
+        item->setOpacity(OSlider->value());
+    }
+    update();
+}
+void MGraphics::newPX(pItem&& item, QImage&& img)
+{
+    item = std::make_unique<MGraphics::PXitem>
+            (QPixmap::fromImage(std::move(img)));
+    scene.addItem(item.get());
+    if (item == titem)
+    {
+        item->setOpacity(OSlider->value());
+    }
+    update();
 }
 
 QPoint MGraphics::transform(QPoint pos)
@@ -521,10 +550,7 @@ void MGraphics::mouseReleaseEvent(QMouseEvent *event)
     }
 
     b_img = red;
-    titem = std::make_unique<PXitem>
-            (QPixmap::fromImage(std::move(red)));
-    scene.addItem(titem.get());
-    update();
+    newPX(std::move(titem),std::move(red));
 }
 
 void MGraphics::drawBackground(QPainter *painter, const QRectF &rect)
@@ -541,21 +567,14 @@ void MGraphics::backward()
     if (Ctrl_Z.empty()) return;
     Ctrl_Y.push(b_img);
     b_img = Ctrl_Z.pop();
-    titem = std::make_unique<PXitem>
-            (QPixmap::fromImage(b_img));
-    scene.addItem(titem.get());
-    update();
-
+    newPX(std::move(titem),b_img);
 }
 void MGraphics::forward()
 {
     if (Ctrl_Y.empty()) return;
     Ctrl_Z.push(Ctrl_Y.top());
     b_img = Ctrl_Y.pop();
-    titem = std::make_unique<PXitem>
-            (QPixmap::fromImage(b_img));
-    scene.addItem(titem.get());
-    update();
+    newPX(std::move(titem),b_img);
 }
 
 void MGraphics::autoThreshold()
@@ -566,10 +585,7 @@ void MGraphics::autoThreshold()
     Ctrl_Y.clear();
 
     b_img = Bradley_Rot(pm.toImage());
-    titem = std::make_unique<PXitem>
-            (QPixmap::fromImage(b_img));
-    scene.addItem(titem.get());
-    update();
+    newPX(std::move(titem),b_img);
 }
 
 
@@ -606,10 +622,7 @@ void MGraphics::RandomColorize()
             mask.setPixel(p,ARGB_A + objColor);
         }
     }
-    randItem = std::make_unique<PXitem>
-            (QPixmap::fromImage(std::move(mask)));
-    scene.addItem(randItem.get());
-    update();
+    newPX(std::move(randItem),std::move(mask));
 }
 
 void MGraphics::wheelEvent(QWheelEvent *event)
