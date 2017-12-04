@@ -14,6 +14,9 @@
 #include <chrono>
 #include <QFloat16>
 
+
+//declaration of constants
+//
 const int SLIDER_X_POS = 8;
 const int SLIDER_Y_POS = 8;
 const int SLIDER_WIDTH = 200;
@@ -22,7 +25,11 @@ const uint BIN_BLACK = 0x0;
 const uint BIN_WHITE = 0xFFFFFF;
 const uint ARGB_A = 0xFF000000;
 const qreal zoomMultiple = 1.05;
-
+const QRgb default_color = qRgb(0,145,218);
+//
+//--------------------------
+//random colors factory
+//
 template
 < class engine = std::default_random_engine,
   class distribution = std::uniform_int_distribution<uint>
@@ -43,6 +50,7 @@ public:
        return dist(re);
     }
 };
+//
 
 
 MGraphics::~MGraphics()
@@ -50,8 +58,8 @@ MGraphics::~MGraphics()
 
 }
 
-MGraphics::MGraphics():thickness_pen(2), cursor_mode(0),drawingFlag(false),ColorObj(qRgb(0, 145, 218))
-{
+MGraphics::MGraphics():thickness_pen(2), cursor_mode(0),drawingFlag(false),ColorObj(default_color)
+{//geometry and logics of scene
     this->setAlignment(Qt::AlignCenter);
     this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     this->setMinimumHeight(100);
@@ -109,8 +117,11 @@ void MGraphics::setCursor_mode(char mode)
     cursor_mode = mode;
 }
 
-void MGraphics::load_from_file(const QString& path)//FINAL
-{
+void MGraphics::load_from_file(const QString& path)
+{//load image to scene
+ //antistacking defs
+ //image fits in center of scene
+ //now source image contained in QPixmap pm
     PXtoNull(std::move(titem));
     PXtoNull(std::move(track_item));
     PXtoNull(std::move(randItem));
@@ -123,24 +134,27 @@ void MGraphics::load_from_file(const QString& path)//FINAL
     update();
 }
 
-void MGraphics::OSlider_Change(int value)//FINAL
-{
+void MGraphics::OSlider_Change(int value)
+{//Opacity of threshold image
     if (titem && titem->scene() == &scene)
     {
         otxt->setText("Opacity level is " + QString::number(value));
-        titem->setOpacity((qreal)value/100);
+        titem->setOpacity(static_cast<qreal>(value)/100);
     }
 }
 
 uint toGrayScale(const QImage& image,int x ,int y)
-{//I = 0.2125R + 0.7154G + 0.0721B)
+{//I = 0.2125R + 0.7154G + 0.0721B
+ //return GrayScale pixel(x,y) from image with half precision
+ //mostly fast;
     QRgb q = image.pixel(x,y);
     qfloat16 half_precision = qRed(q) * 0.212F + qGreen(q) * 0.715F + qBlue(q) * 0.0721F;
     return static_cast<uint> (half_precision);
 }
 
 QImage Bradley_Rot(const QImage& src)
-{
+{//algo https://habrahabr.ru/post/278435
+ //
     const int w = src.width();
     const int h = src.height();
     QImage ret_img(w,h,src.format());
@@ -149,7 +163,8 @@ QImage Bradley_Rot(const QImage& src)
     int s2 = S / 2;
     //get integral_image
     //S(x, y) = I(x, y) + S(x-1, y) + S(x, y-1) – S(x-1, y-1);
-    QVector<QVector<uint>> integral_image (h,QVector<uint>(w,0));
+    MGraphics::Labels integral_image
+            (h,MGraphics::Labels_row(w,0));
     for (int x = 0; x < w; ++x) integral_image[0][x] = toGrayScale(src,x,0);
     for (int y = 0; y < h; ++y) integral_image[y][0] = toGrayScale(src,0,y);
 
@@ -195,7 +210,8 @@ QImage Bradley_Rot(const QImage& src)
 }
 
 QImage threshold_img(const QImage& source_img, int threshold_value)
-{
+{//by threshold value
+ //return new image
     int h = source_img.height();
     int w = source_img.width();
     QImage ret_img(w,h,source_img.format());
@@ -216,7 +232,7 @@ QImage threshold_img(const QImage& source_img, int threshold_value)
 }
 
 QImage fast_threshold(const QImage& img, int threshold_value)
-{
+{// not working
     // QImage::Format_RGB32:
     // QImage::Format_ARGB32:
     // QImage::Format_ARGB32_Premultiplied:
@@ -251,33 +267,32 @@ QImage fast_threshold(const QImage& img, int threshold_value)
    return retImg.fromData(result,static_cast<int>(size));
 }
 
-void MGraphics::Slider_Change(int value)//threshold
-{
+void MGraphics::Slider_Change(int value)
+{//Slider info
     txt->setText("threshold level is " + QString::number(value));
 }
 
 void MGraphics::Slider_Release()
-{
+{//threshold by sliders move
     if (pm.isNull()) return;
     Ctrl_Z.clear();
     Ctrl_Y.clear();
 
     b_img = threshold_img(pm.toImage(),Slider->value());
     newPX(std::move(titem),b_img);
-
 }
 
-inline bool MGraphics::on_img(int x,int y)//return true if (x,y) is pixmap point
-{
+inline bool MGraphics::on_img(int x,int y)
+{//return true if (x,y) is pixmap point
     return bool (!((x < 0)||(y < 0)||(x + 1 > pm.width())||(y + 1 > pm.height())));
 }
 
 void MGraphics::ObjectsColorChange(QColor col)
-{
+{//setter
     ColorObj = col;
 }
 
-size_t ID_onDraw;
+quint64 ID_onDraw; //current objects id on draw
 QPoint prevPoint;
 QPoint StartPoint;
 QPoint EndPoint;
@@ -290,26 +305,27 @@ inline bool MGraphics::dataIsReady()
 }
 
 void MGraphics::ShowObjectUnderCursor(QMouseEvent *event)
-{
-    QPoint p = transform(event->pos());
+{//highlight
+    QPoint p = transform(event->pos()); //current pos
     int x = p.x();
     int y = p.y();
     if (dataIsReady() && cursor_mode != 2)
     {
-        size_t id = data_01[y][x];
+        auto id = data_01[y][x];
         if (id){
+            //create temp empty image "track"
             QImage track(pm.width(),pm.height(),QImage::Format_ARGB32);
             track.fill(qRgba(0, 0, 0, 0));
-            for (const auto& p : data_obj[id - 1].Points) {
+            //fill "track" by object points
+            for (const QPoint& p : data_obj[id - 1].Points) {
                track.setPixel(p,ColorObj.rgb());
              }
             newPX(std::move(track_item),std::move(track));
-            QToolTip::showText(event->globalPos(),QString ("id = " + QString::number(data_01[y][x])));
+            //tooltip is info under cursor
+            QToolTip::showText(event->globalPos(),QString("id = " + QString::number(data_01[y][x])));
         }else QToolTip::showText(event->globalPos(),QString("(" + QString::number(x) +
                                                             "," + QString::number(y) + ")"));
     }
-
-
 }
 bool MGraphics::PXtoNull(pItem&& item)
 {//return true if item was 0 before call
@@ -326,7 +342,7 @@ void MGraphics::newPX(pItem&& item,const QPixmap& pix)
     scene.addItem(item.get());
     if (item == titem)
     {
-        item->setOpacity(static_cast<qreal>(OSlider->value()));
+        item->setOpacity(static_cast<qreal>(OSlider->value())/100);
     }
     update();
 }
@@ -337,7 +353,7 @@ void MGraphics::newPX(pItem&& item,const QImage& img)
     scene.addItem(item.get());
     if (item == titem)
     {
-        item->setOpacity(static_cast<qreal>(OSlider->value()));
+        item->setOpacity(static_cast<qreal>(OSlider->value())/100);
     }
     update();
 }
@@ -348,13 +364,13 @@ void MGraphics::newPX(pItem&& item, QImage&& img)
     scene.addItem(item.get());
     if (item == titem)
     {
-        item->setOpacity(static_cast<qreal>(OSlider->value()));
+        item->setOpacity(static_cast<qreal>(OSlider->value())/100);
     }
     update();
 }
 
 QPoint MGraphics::transform(QPoint pos)
-{
+{//global cursor pos to local_scene coordinated
     QPointF l = mapToScene(pos.x(),pos.y());
     int x = static_cast<int> (l.x());
     int y = static_cast<int> (l.y());
@@ -390,19 +406,19 @@ void MGraphics::mouseMoveEvent(QMouseEvent *event)
 
 bool MGraphics::decide_to_draw(QPoint p)
 {
-    bool res;
+    bool result;
     switch (cursor_mode) {
     case 1:
-        res = data_01[p.y()][p.x()] > 0 ? true : false;
+        result = data_01[p.y()][p.x()] > 0 ? true : false;
         break;
     case 2:
-        res = true; //data_01[p.y()][p.x()] > 0 ? false : true;
+        result = true; //data_01[p.y()][p.x()] > 0 ? false : true;
         break;
     default:
-        res = false;
+        result = false;
         break;
     }
-    return res;
+    return result;
 }
 
 void MGraphics::mousePressEvent(QMouseEvent *event)
@@ -416,18 +432,20 @@ void MGraphics::mousePressEvent(QMouseEvent *event)
     drawingFlag = decide_to_draw(p);
     if (drawingFlag)
     {
+      //save start point
         ID_onDraw = data_01[p.y()][p.x()];
         StartPoint = prevPoint = p;
     }
 }
 
-auto get_prime(int R)
-{
+auto get_prime(int Radius)
+{//getter min drawing primitive
    QVector<QPoint> res;
-   for (int y = -R; y < R; ++y)
-       for (int x = -R; x < R; ++x)
+   for (int y = -Radius; y < Radius; ++y)
+       for (int x = -Radius; x < Radius; ++x)
        {
-           if (std::pow(x,2) + std::pow(y,2) <= std::pow(R,2))
+           if (std::pow(x,2) + std::pow(y,2)
+                   <= std::pow(Radius,2))
            {
                res.push_back(QPoint(x,y));
            }
@@ -436,7 +454,7 @@ auto get_prime(int R)
 }
 
 class SecureDrawing
-{
+{//Class secure safely drawing
     int w;
     int h;
     QPoint pt;
@@ -476,15 +494,16 @@ void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, int t
     }
 }
 
-const QRgb black = qRgb(0,0,0);
+const auto black = qRgb(0,0,0);
 
 inline bool isBlack(int x, int y, const QImage& im)
 {
-    return im.pixel(x,y) == black;
+    return bool(im.pixel(x,y) == black);
 }
 
 void fill_area(QImage& img, QPoint Start_point)
-{
+{//fill closed area, start with Start_point
+
   QStack<QPoint> depth;
   depth.push(Start_point);
   const int w = img.width();
@@ -492,8 +511,7 @@ void fill_area(QImage& img, QPoint Start_point)
 
   while (!depth.empty())
   {
-    QPoint t = depth.top();
-    depth.pop();
+    QPoint t = depth.pop();
     int x = t.x();
     int y = t.y();
     img.setPixel(t,BIN_BLACK);
@@ -524,9 +542,9 @@ QPoint getStartPoint(const QImage& img, QPoint CenterMass)
 
 QPoint MGraphics::drawCurve_andGetCenter(QImage& img)
 {
-    int N = 0;
-    qreal avgX = 0.0F;
-    qreal avgY = 0.0F;
+    quint32 N = 0;
+    qreal avgX = 0.0F; // average X coordinate
+    qreal avgY = 0.0F; // average Y coordinate
     while (!line_items.empty())//size line_items == size lines
     {
         //reWrite bin image
@@ -546,7 +564,8 @@ QPoint MGraphics::drawCurve_andGetCenter(QImage& img)
 }
 
 bool MGraphics::isCorrectRelease(QMouseEvent *event)
-{
+{// logic for draw and erase cursors
+ //
     drawingFlag = false;
     QPoint p = transform(event->pos());
     int x = p.x(); int y = p.y();
@@ -663,7 +682,8 @@ void MGraphics::RandomColorize()
 }
 
 void MGraphics::wheelEvent(QWheelEvent *event)
-{
+{//zooming by wheel
+    //
     if (pm.isNull() || scene.items().empty())
         return;
     QPoint numDegrees = event->angleDelta() / 8;

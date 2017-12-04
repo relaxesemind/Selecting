@@ -19,24 +19,25 @@ class MGraphics : public QGraphicsView
     Q_OBJECT
     using PXitem = QGraphicsPixmapItem;
     using pItem = std::unique_ptr<PXitem>;
-    using Labels = QVector<QVector<std::size_t>>;
-    using Objects = QVector<S_area>;
     using pSlider = std::unique_ptr<QSlider>;
     using pLabel = std::unique_ptr<QLabel>;
 public:
+    using Labels = QVector<QVector<quint64>>;
+    using Labels_row = QVector<quint64>;
+    using Objects = QVector<S_area>;
    MGraphics();
    ~MGraphics();
 
-   static Labels data_01;
-   static Objects data_obj;
+   static Labels data_01; // HERE LABELS DATA
+   static Objects data_obj; // HERE OBJECTS
 
    const QImage& get_bin_img()
-   {
+   {//getter of threshold image
        return b_img;
    }
-   void backward();
-   void forward();
-   void autoThreshold();
+   void backward(); //ctrl_z
+   void forward(); //ctrl_y
+   void autoThreshold();//breadley-rot
 
 protected:
   void mouseMoveEvent(QMouseEvent *event)override;
@@ -61,39 +62,39 @@ private slots:
   void Slider_Release();
 
 private:
-  bool on_img(int,int);
-  QPoint transform(QPoint);
+  bool on_img(int,int); //predicate : true if cursor on image
+  QPoint transform(QPoint); // transform coordinates (local need)
   QPoint drawCurve_andGetCenter(QImage&); //return centerMass of curve
-  void ShowObjectUnderCursor(QMouseEvent*);
-  bool decide_to_draw(QPoint);
-  bool dataIsReady();
-  bool isCorrectRelease(QMouseEvent*);
-  bool PXtoNull(pItem&&);
-  void newPX(pItem&&,const QPixmap&);
-  void newPX(pItem&&,const QImage&);
-  void newPX(pItem&&,QImage&&);
+  void ShowObjectUnderCursor(QMouseEvent*); //highlight objects
+  bool decide_to_draw(QPoint);//local logic
+  bool dataIsReady();//logic
+  bool isCorrectRelease(QMouseEvent*);//logic
+  bool PXtoNull(pItem&&);//delete item from scene safely
+  void newPX(pItem&&,const QPixmap&);//add new item to scene smartly
+  void newPX(pItem&&,const QImage&);//overload
+  void newPX(pItem&&,QImage&&);//overload
 
-  int thickness_pen;
+  int thickness_pen; //>=1
   char cursor_mode; //0 - view(nothing), 1 - draw, 2 - erase
   bool drawingFlag;
-  QColor ColorObj;
+  QColor ColorObj; // color of "highlighted" object
 
-  pLabel txt;
-  pLabel otxt;
-  pSlider Slider;
-  pSlider OSlider;
-  QPixmap draw_pix;
-  QPixmap erase_pix;
+  pLabel txt; // show theshold value
+  pLabel otxt; //show opacity value
+  pSlider Slider; //threshold slider
+  pSlider OSlider; //opacity slider
+  QPixmap draw_pix; // icon of draw cursor
+  QPixmap erase_pix; // icon of erase cursor
 
   QGraphicsScene scene;
-  QPixmap pm;
-  QImage b_img;
+  QPixmap pm; //SOURCE IMAGE
+  QImage b_img; // contained threshold image in mem
   QStack<QImage> Ctrl_Z, Ctrl_Y;
 
   pItem sourceItem_from_image;
-  pItem titem;
-  pItem track_item;
-  pItem randItem;
+  pItem titem; // contained threshold image on scene
+  pItem track_item; // contained temp image (highlight object)
+  pItem randItem; // contained randomize-colored image
 };
 
 #endif // MGRAPHICS_H

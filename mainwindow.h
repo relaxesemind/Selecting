@@ -2,6 +2,8 @@
 #define MAINWINDOW_H
 
 #include "mgraphics.h"
+
+#include <memory>
 #include <QMainWindow>
 #include <QImage>
 #include <QPixmap>
@@ -64,8 +66,8 @@ private slots:
     void on_action5_triggered();
 
 private:
-    Ui::MainWindow *ui;
-    MGraphics *View;
+    Ui::MainWindow* ui;
+    MGraphics* View;
 };
 
 #endif // MAINWINDOW_H

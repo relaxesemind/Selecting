@@ -3,16 +3,18 @@
 
 #include <QVector>
 #include <QPoint>
-#include <iostream>
-#include <QBitmap>
+#include <QString>
+
+const QString dot('.');
+
 struct S_area
 {
-    std::size_t id;
+    quint64 id;
     QVector<QPoint> Points;
     QVector<QPoint> CPoints;
     S_area() = default;
 
-    explicit S_area(std::size_t number): id(number), Points(0), CPoints(0){}
+    explicit S_area(quint64 number): id(number), Points(0), CPoints(0){}
 
     S_area& operator=(const S_area& obj)
     {
@@ -22,16 +24,6 @@ struct S_area
         return *this;
     }
 
-    void print()const
-    {
-        std::cout<<"id : "<<id<<" ";
-        for(const QPoint& p : Points)
-        std::cout<<"("<<p.x()<<","<<p.y()<<") ";
-        std::cout<<" cont : ";
-        for(const QPoint& p : CPoints)
-        std::cout<<"("<<p.x()<<","<<p.y()<<") ";
-        std::cout<<std::endl;
-    }
     void add_main(QPoint p)
     {
         Points.push_back(p);

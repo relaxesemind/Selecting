@@ -8,22 +8,23 @@
 #include <QPoint>
 #include <QDebug>
 
-QVector<QVector<size_t>> MGraphics::data_01;
-QVector<S_area> MGraphics::data_obj;
+MGraphics::Labels MGraphics::data_01;
+MGraphics::Objects MGraphics::data_obj;
 
-inline bool inner(size_t x, size_t y, QVector<QVector<size_t>>& V)//return true if d is inner point
-{
-    return bool (V[y][x + 1])&&(V[y][x - 1])&&(V[y + 1][x])&&(V[y - 1][x]);
+inline bool inner(size_t x, size_t y, MGraphics::Labels& V)
+{//return true if d is inner point
+ //dangerous function. May cause out of range!
+    return bool(V[y][x + 1])&&(V[y][x - 1])&&(V[y + 1][x])&&(V[y - 1][x]);
 }
 
 const QRgb black = qRgb(0,0,0);
 
 inline bool isBlack(int x, int y, const QImage& im)
 {
-    return im.pixel(x,y) == black;
+    return bool(im.pixel(x,y) == black);
 }
 
-void fill(const QImage& img, QVector<QVector<size_t>>& V, int _x, int _y, int L)//FINAL
+void fill(const QImage& img, MGraphics::Labels& V, int _x, int _y, int L)//FINAL
 {
   QPoint t;
   QStack<QPoint> depth;
@@ -33,8 +34,7 @@ void fill(const QImage& img, QVector<QVector<size_t>>& V, int _x, int _y, int L)
 
   while (!depth.empty())
   {
-    t = depth.top();
-    depth.pop();
+    t = depth.pop();
     int x = t.rx();
     int y = t.ry();
     V[y][x] = L; // filling.
@@ -59,12 +59,13 @@ void fill(const QImage& img, QVector<QVector<size_t>>& V, int _x, int _y, int L)
 }
 
 void Worker::doWork()//heavy function
-{
+{//main calculate
     const size_t _h = bin.height();
     const size_t _w = bin.width();
     size_t L = 1; // starting id value
 
-    QVector<QVector<size_t>> Labels(_h, QVector<size_t>(_w,0));
+    MGraphics::Labels Labels
+            (_h, MGraphics::Labels_row(_w,0));
 
 //labeling__________________________________________________________________________
     for(size_t y = 0; y < _h; ++y)
@@ -76,13 +77,13 @@ void Worker::doWork()//heavy function
        }
       }
 
-//_________________________________________________________________________________
+//form objects______________________________________________________________________
     const size_t size = --L; // size == num of objects
-    QVector<S_area> V(size);
+    MGraphics::Objects V(size);
 
     for(size_t i = 0;i < size; ++i)
      {
-       V[i] = S_area{i};
+       V[i] = S_area(i);
      }
 //-----------------------------------------------------------------------------
 
