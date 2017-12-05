@@ -3,13 +3,7 @@
 
 #include "mgraphics.h"
 
-#include <memory>
 #include <QMainWindow>
-#include <QImage>
-#include <QPixmap>
-#include <QGraphicsPixmapItem>
-#include <QSlider>
-
 
 namespace Ui {
 class MainWindow;

@@ -24,7 +24,7 @@ inline bool isBlack(int x, int y, const QImage& im)
     return bool(im.pixel(x,y) == black);
 }
 
-void fill(const QImage& img, MGraphics::Labels& V, int _x, int _y, int L)//FINAL
+void fill(const QImage& img, MGraphics::Labels& V, int _x, int _y, quint64 L)
 {
   QPoint t;
   QStack<QPoint> depth;
@@ -60,18 +60,18 @@ void fill(const QImage& img, MGraphics::Labels& V, int _x, int _y, int L)//FINAL
 
 void Worker::doWork()//heavy function
 {//main calculate
-    const size_t _h = bin.height();
-    const size_t _w = bin.width();
-    size_t L = 1; // starting id value
+    int const _h = bin.height();
+    int const _w = bin.width();
+    quint64 L = 1; // starting id value
 
     MGraphics::Labels Labels
             (_h, MGraphics::Labels_row(_w,0));
 
 //labeling__________________________________________________________________________
-    for(size_t y = 0; y < _h; ++y)
-      for(size_t x = 0; x < _w; ++x)
+    for(auto y = 0; y < _h; ++y)
+      for(auto x = 0; x < _w; ++x)
       {
-       if((Labels[y][x] == 0)&&(isBlack(x,y,bin)))
+       if((!Labels[y][x])&&(isBlack(x,y,bin)))
        {
          fill(bin,Labels,x,y,L++);//very fast!
        }
@@ -89,10 +89,10 @@ void Worker::doWork()//heavy function
 
     if ((size > 0)&&(_h > 2)&&(_w > 2))
     {
-    for(size_t y = 1; y < _h - 1; ++y)//general case
-      for(size_t x = 1; x < _w - 1; ++x)//general case
+    for(int y = 1; y < _h - 1; ++y)//general case
+      for(int x = 1; x < _w - 1; ++x)//general case
       {
-          size_t id = Labels[y][x];
+          auto id = Labels[y][x];
           if ((id > 0)&&(id < size + 1))
           {
             QPoint t(x,y);
@@ -104,19 +104,19 @@ void Worker::doWork()//heavy function
             }
           }
       }
-    for(size_t x = 1; x < _w - 1; ++x)//top case
+    for(int x = 1; x < _w - 1; ++x)//top case
      {
-        size_t id = Labels[0][x];
+        auto id = Labels[0][x];
         if ((id > 0)&&(id < size + 1))
         {
            QPoint t(x,0);
            V[id - 1].add_main(t);
-           V[id - 1].add_cont(t);//
+           V[id - 1].add_cont(t);
         }
      }
-    for(size_t x = 1; x < _w - 1; ++x)//bottom case
+    for(int x = 1; x < _w - 1; ++x)//bottom case
      {
-        size_t id = Labels[_h - 1][x];
+        auto id = Labels[_h - 1][x];
         if ((id > 0)&&(id < size + 1))
                 {
                    QPoint t(x,_h - 1);
@@ -124,9 +124,9 @@ void Worker::doWork()//heavy function
                    V[id - 1].add_cont(t);
                 }
      }
-    for(size_t y = 0; y < _h; ++y)//left case
+    for(int y = 0; y < _h; ++y)//left case
      {
-         size_t id = Labels[y][0];
+         auto id = Labels[y][0];
          if ((id > 0)&&(id < size + 1))
          {
             QPoint t(0,y);
@@ -134,9 +134,9 @@ void Worker::doWork()//heavy function
             V[id - 1].add_cont(t);
          }
      }
-    for(size_t y = 0; y < _h; ++y)//right case
+    for(int y = 0; y < _h; ++y)//right case
      {
-         size_t id = Labels[y][_w - 1];
+         auto id = Labels[y][_w - 1];
          if ((id > 0)&&(id < size + 1))
          {
             QPoint t(_w - 1,y);

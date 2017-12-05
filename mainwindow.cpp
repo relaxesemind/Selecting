@@ -6,13 +6,12 @@
 #include <QDebug>
 #include <QThread>
 #include <QString>
-#include <string>
 #include <QFileDialog>
 #include <QColorDialog>
 #include <QColor>
 #include <QAction>
 #include <QMenu>
-#include<QIODevice>
+#include <QIODevice>
 #include <QDate>
 #include <QTime>
 #include <QTextStream>
@@ -65,6 +64,7 @@ void MainWindow::on_actionStart_algo_triggered()
      task -> moveToThread(thread);
 //--------------------------------------------------------------------
      View->setEnabled(false);
+
      connect(task,SIGNAL(EnableView(bool)),
              View,SLOT(setEnabled(bool)));
      connect(thread,SIGNAL(started()),

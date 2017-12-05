@@ -125,9 +125,9 @@ void MGraphics::load_from_file(const QString& path)
     PXtoNull(std::move(titem));
     PXtoNull(std::move(track_item));
     PXtoNull(std::move(randItem));
-
+//
     pm.load(path);
-
+//
     newPX(std::move(sourceItem_from_image),pm);
     MGraphics::centerOn(sourceItem_from_image.get());
     MGraphics::fitInView(sourceItem_from_image.get(),Qt::KeepAspectRatio);
@@ -136,10 +136,12 @@ void MGraphics::load_from_file(const QString& path)
 
 void MGraphics::OSlider_Change(int value)
 {//Opacity of threshold image
+ //between 0.0 (transparent) and 1.0 (opaque)
     if (titem && titem->scene() == &scene)
     {
+        auto opacity = qreal(value) / 100;
         otxt->setText("Opacity level is " + QString::number(value));
-        titem->setOpacity(static_cast<qreal>(value)/100);
+        titem->setOpacity(opacity);
     }
 }
 
@@ -231,13 +233,17 @@ QImage threshold_img(const QImage& source_img, int threshold_value)
     return ret_img; //is std::move(ret_img);
 }
 
-QImage fast_threshold(const QImage& img, int threshold_value)
+QImage fast_threshold(const QImage& source, int threshold_value)
 {// not working
     // QImage::Format_RGB32:
     // QImage::Format_ARGB32:
     // QImage::Format_ARGB32_Premultiplied:
 
-    QImage retImg(img.width(),img.height(),img.format());
+   // QImage retImg(img.width(),img.height(),img.format());
+  //  QImage result(source);
+  //  result.convertToFormat(QImage::Format_Mono);
+
+    /*
     quint8 const max = 0xFF;
     quint8 const min = 0x0;
     quint32 const w = 4 * img.width();
@@ -265,6 +271,8 @@ QImage fast_threshold(const QImage& img, int threshold_value)
        }
     }
    return retImg.fromData(result,static_cast<int>(size));
+   */
+   // return result;
 }
 
 void MGraphics::Slider_Change(int value)
@@ -482,11 +490,11 @@ void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, int t
     int len = static_cast<int> (n.length());
     n.normalize();
     QVector2D v(p1);
-    auto prime = get_prime(thickness);
+    auto prime = std::move(get_prime(thickness));
     while (len--)
     {
         v += n;
-        for (const QPoint& p : prime)
+        for (auto&& p : prime)
         {
            SecureDrawing pixel
                    (img,p + v.toPoint(),color);
@@ -662,6 +670,7 @@ void MGraphics::keyPressEvent(QKeyEvent *e)
 
 void MGraphics::RandomColorize()
 {
+    if (!dataIsReady() || pm.isNull()) return;
     QImage mask(pm.width(),pm.height(),QImage::Format_ARGB32);
     mask.fill(qRgba(0, 0, 0, 0));
     GenColor<> gen;
