@@ -14,7 +14,6 @@
 #include <chrono>
 #include <QFloat16>
 
-
 //declaration of constants
 //
 const int SLIDER_X_POS = 8;
@@ -26,6 +25,14 @@ const uint BIN_WHITE = 0xFFFFFF;
 const uint ARGB_A = 0xFF000000;
 const qreal zoomMultiple = 1.05;
 const QRgb default_color = qRgb(0,145,218);
+const QRgb black = qRgb(0,0,0);
+//global variables for drawing logic
+quint64 ID_onDraw; //current objects id on draw
+QPoint prevPoint;
+QPoint StartPoint;
+QPoint EndPoint;
+QStack<QLineF> lines;
+QStack<QGraphicsLineItem*> line_items;
 //
 //--------------------------
 //random colors factory
@@ -45,6 +52,12 @@ public:
         auto s = std::chrono::system_clock::now().time_since_epoch().count();
         re.seed(s);
     }
+
+    operator QRgb()
+    {
+       return static_cast<QRgb> (*this());
+    }
+
     auto operator()()
     {
        return dist(re);
@@ -155,13 +168,14 @@ uint toGrayScale(const QImage& image,int x ,int y)
 }
 
 QImage Bradley_Rot(const QImage& src)
-{//algo https://habrahabr.ru/post/278435
- //
+{//main idea from this : https://habrahabr.ru/post/278435
+ //my own implementation
+
     const int w = src.width();
     const int h = src.height();
     QImage ret_img(w,h,src.format());
     const int S = w / 8;
-    const float t = 0.15;
+    const float t = 0.15F;
     int s2 = S / 2;
     //get integral_image
     //S(x, y) = I(x, y) + S(x-1, y) + S(x, y-1) – S(x-1, y-1);
@@ -214,8 +228,8 @@ QImage Bradley_Rot(const QImage& src)
 QImage threshold_img(const QImage& source_img, int threshold_value)
 {//by threshold value
  //return new image
-    int h = source_img.height();
-    int w = source_img.width();
+    int const h = source_img.height();
+    int const w = source_img.width();
     QImage ret_img(w,h,source_img.format());
 
     for (int i = 0;i < w; ++i)
@@ -233,51 +247,10 @@ QImage threshold_img(const QImage& source_img, int threshold_value)
     return ret_img; //is std::move(ret_img);
 }
 
-QImage fast_threshold(const QImage& source, int threshold_value)
-{// not working
-    // QImage::Format_RGB32:
-    // QImage::Format_ARGB32:
-    // QImage::Format_ARGB32_Premultiplied:
-
-   // QImage retImg(img.width(),img.height(),img.format());
-  //  QImage result(source);
-  //  result.convertToFormat(QImage::Format_Mono);
-
-    /*
-    quint8 const max = 0xFF;
-    quint8 const min = 0x0;
-    quint32 const w = 4 * img.width();
-    quint32 const h = 4 * img.height();
-    quint64 const size = w * h;
-    quint8 const* data = img.constBits();
-    quint8* result = new quint8 [size];
-    //format #AARRGGBB
-
-    for (quint64 i = 0; i < size; i += 4)
-    {
-       if (data[i+1] + data[i+2] + data[i+3]
-             >= threshold_value * 3)
-       {
-           result[i] = max;
-           result[i+1] = max;
-           result[i+2] = max;
-           result[i+3] = max;
-       }else
-       {
-           result[i] = max;
-           result[i+1] = min;
-           result[i+2] = min;
-           result[i+3] = min;
-       }
-    }
-   return retImg.fromData(result,static_cast<int>(size));
-   */
-   // return result;
-}
-
 void MGraphics::Slider_Change(int value)
 {//Slider info
-    txt->setText("threshold level is " + QString::number(value));
+    txt->setText(QString("threshold level is ")
+                 + QString::number(value));
 }
 
 void MGraphics::Slider_Release()
@@ -290,9 +263,17 @@ void MGraphics::Slider_Release()
     newPX(std::move(titem),b_img);
 }
 
-inline bool MGraphics::on_img(int x,int y)
+inline bool MGraphics::on_img(int x,int y) const
 {//return true if (x,y) is pixmap point
-    return bool (!((x < 0)||(y < 0)||(x + 1 > pm.width())||(y + 1 > pm.height())));
+    return bool (!((x < 0)||(y < 0)||
+                   (x + 1 > pm.width())||
+                   (y + 1 > pm.height())));
+}
+inline bool MGraphics::on_img(QPoint p) const
+{
+    return bool (!((p.x() < 0)||(p.y() < 0)||
+                   (p.x() + 1 > pm.width())||
+                   (p.y() + 1 > pm.height())));
 }
 
 void MGraphics::ObjectsColorChange(QColor col)
@@ -300,14 +281,7 @@ void MGraphics::ObjectsColorChange(QColor col)
     ColorObj = col;
 }
 
-quint64 ID_onDraw; //current objects id on draw
-QPoint prevPoint;
-QPoint StartPoint;
-QPoint EndPoint;
-QStack<QLineF> lines;
-QStack<QGraphicsLineItem*> line_items;
-
-inline bool MGraphics::dataIsReady()
+inline bool MGraphics::dataIsReady() const
 {
    return bool(!data_01.empty() && !data_obj.empty() && data_01.size() == pm.height());
 }
@@ -335,8 +309,10 @@ void MGraphics::ShowObjectUnderCursor(QMouseEvent *event)
                                                             "," + QString::number(y) + ")"));
     }
 }
+
 bool MGraphics::PXtoNull(pItem&& item)
 {//return true if item was 0 before call
+
     if (item)
     {
         item = nullptr;
@@ -365,6 +341,12 @@ void MGraphics::newPX(pItem&& item,const QImage& img)
     }
     update();
 }
+
+void MGraphics::setthread_ON_WORK(bool value)
+{
+    thread_ON_WORK = value;
+}
+
 void MGraphics::newPX(pItem&& item, QImage&& img)
 {
     item = std::make_unique<MGraphics::PXitem>
@@ -377,7 +359,7 @@ void MGraphics::newPX(pItem&& item, QImage&& img)
     update();
 }
 
-QPoint MGraphics::transform(QPoint pos)
+QPoint MGraphics::transform(QPoint pos) const
 {//global cursor pos to local_scene coordinated
     QPointF l = mapToScene(pos.x(),pos.y());
     int x = static_cast<int> (l.x());
@@ -388,12 +370,13 @@ QPoint MGraphics::transform(QPoint pos)
 void MGraphics::mouseMoveEvent(QMouseEvent *event)
 {
     QPoint p = transform(event->pos());
-    if (!on_img(p.x(),p.y())){
+    if (!on_img(p)){
         PXtoNull(std::move(track_item));
         return;
     }
     ShowObjectUnderCursor(event);
 //----------------------------------------------------------------------------------------------------------------------
+
     if (drawingFlag && cursor_mode == 1)//draw
     {
        QLineF line(prevPoint.x(),prevPoint.y(),p.x(),p.y());
@@ -412,7 +395,7 @@ void MGraphics::mouseMoveEvent(QMouseEvent *event)
     }
 }
 
-bool MGraphics::decide_to_draw(QPoint p)
+bool MGraphics::decide_to_draw(QPoint p) const
 {
     bool result;
     switch (cursor_mode) {
@@ -432,7 +415,7 @@ bool MGraphics::decide_to_draw(QPoint p)
 void MGraphics::mousePressEvent(QMouseEvent *event)
 {
     QPoint p = transform(event->pos());
-    if (!on_img(p.x(),p.y()) || !dataIsReady()) { return; }
+    if (!on_img(p) || !dataIsReady()) { return; }
 //----------------------------------------------------------------------------------------------------------------------
     lines.clear();
     line_items.clear();
@@ -490,7 +473,7 @@ void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, int t
     int len = static_cast<int> (n.length());
     n.normalize();
     QVector2D v(p1);
-    auto prime = std::move(get_prime(thickness));
+    auto prime = get_prime(thickness);
     while (len--)
     {
         v += n;
@@ -501,8 +484,6 @@ void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, int t
         }
     }
 }
-
-const auto black = qRgb(0,0,0);
 
 inline bool isBlack(int x, int y, const QImage& im)
 {
@@ -656,21 +637,21 @@ void MGraphics::autoThreshold()
 
 void MGraphics::keyPressEvent(QKeyEvent *e)
 {
-    if (e->key() == Qt::Key_Z &&
-             e->modifiers() & Qt::ControlModifier)
+    if (e->key() && e->modifiers() & Qt::ControlModifier)
     {
-      backward();
-    }
-    if (e->key() == Qt::Key_Y &&
-            e->modifiers() & Qt::ControlModifier)
-    {      
-      forward();
+        switch (e->key()) {
+        case Qt::Key_Z: backward(); break;
+        case Qt::Key_Y: forward(); break;
+        case Qt::Key_T: autoThreshold(); break;
+        case Qt::Key_O: MGraphics::load_from_file(getFileName()); break;
+        }
     }
 }
 
 void MGraphics::RandomColorize()
 {
-    if (!dataIsReady() || pm.isNull()) return;
+    if (!dataIsReady() || pm.isNull() || thread_ON_WORK) return;
+
     QImage mask(pm.width(),pm.height(),QImage::Format_ARGB32);
     mask.fill(qRgba(0, 0, 0, 0));
     GenColor<> gen;
@@ -693,8 +674,8 @@ void MGraphics::RandomColorize()
 void MGraphics::wheelEvent(QWheelEvent *event)
 {//zooming by wheel
     //
-    if (pm.isNull() || scene.items().empty())
-        return;
+    if (pm.isNull() || scene.items().empty()) return;
+
     QPoint numDegrees = event->angleDelta() / 8;
     if (numDegrees.y() > 0)
     {

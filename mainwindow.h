@@ -16,6 +16,8 @@ class MainWindow : public QMainWindow
 public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
+protected:
+  void keyPressEvent(QKeyEvent*e)override;
 signals:
 
     void send_filePath(const QString&);

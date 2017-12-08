@@ -15,6 +15,7 @@
 #include <QDate>
 #include <QTime>
 #include <QTextStream>
+#include <QKeyEvent>
 
 const qreal zoomMultiple = 1.05;
 
@@ -43,11 +44,23 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
+void MainWindow::keyPressEvent(QKeyEvent* e)
+{
+    if (e->key() && e->modifiers() & Qt::ControlModifier)
+    {
+        switch (e->key()) {
+        case Qt::Key_O: emit send_filePath(getFileName()); break;
+        case Qt::Key_T: View->autoThreshold(); break;
+        case Qt::Key_R: MainWindow::on_actionStart_algo_triggered(); break;
+        case Qt::Key_A: emit send_colorize_obj(); break;
+        case Qt::Key_S: MainWindow::on_action5_triggered(); break;
+        }
+    }
+}
+
 void MainWindow::on_actionLoad_file_triggered()
 {//Signal from ui to load image
-    QString file_name = QFileDialog::getOpenFileName
-            (this, "Select image", "", "*.jpg *.jpeg *.bmp *.png");
-    emit send_filePath(file_name);
+    emit send_filePath(getFileName());
 }
 
 void MainWindow::on_actionStart_algo_triggered()
@@ -58,24 +71,30 @@ void MainWindow::on_actionStart_algo_triggered()
 // all is safe and auto self-destroying
      if (View->get_bin_img().isNull()) return;
 
-     QThread *thread = new QThread();
-     Worker    *task = new Worker(View->get_bin_img());
+     View->setthread_ON_WORK(true);
+     QThread* thread = new QThread();
+     Worker*    task = new Worker(View->get_bin_img());
 //--------------------------------------------------------------------
      task -> moveToThread(thread);
 //--------------------------------------------------------------------
      View->setEnabled(false);
 
-     connect(task,SIGNAL(EnableView(bool)),
-             View,SLOT(setEnabled(bool)));
-     connect(thread,SIGNAL(started()),
-             task, SLOT(doWork()),Qt::DirectConnection);
-     connect(task,SIGNAL(workFinished()),
-             thread,SLOT(quit()),Qt::DirectConnection);
+     connect(thread,&QThread::started,
+             task, &Worker::doWork,Qt::DirectConnection);
+     connect(task,&Worker::workFinished,
+             thread,&QThread::quit,Qt::DirectConnection);
+     connect(task,&Worker::workFinished,
+             this,[=](){
+         View->setEnabled(true);
+     });
      //automatically delete thread and task object when work is done:
-     connect(thread,SIGNAL(finished()),
-             task,SLOT(deleteLater()),Qt::DirectConnection);
-     connect(thread,SIGNAL(finished()),
-             thread,SLOT(deleteLater()),Qt::DirectConnection);
+     connect(thread,&QThread::finished,
+             task,&Worker::deleteLater,Qt::DirectConnection);
+     connect(thread,&QThread::finished,
+             thread,&QThread::deleteLater,Qt::DirectConnection);
+     connect(thread,&QThread::finished,this,[=](){
+         View->setthread_ON_WORK(false);
+     });
 //--------------------------------------------------------------------
      thread->start();
 }
@@ -210,10 +229,13 @@ void SaveToFile(QTextStream& out)
 
 void MainWindow::on_action5_triggered()
 {//save data
-   QString dir = QString("DATA/DATA ") + QDate::currentDate().toString(QString("dd_MM_yyyy")) + QString(" ")
+   QString filename = QString("DATA/DATA ")
+           + QDate::currentDate().toString(QString("dd_MM_yyyy")) + QString(" ")
                + QTime::currentTime().toString(QString("hh_mm_ss"));
-   QString filename = QFileDialog::getSaveFileName(this,"SAVE DATA",dir,"*.dat");
-   QFile file(filename);
+   QFile file(
+     QFileDialog::getSaveFileName
+      (this,"SAVE DATA",filename,"*.dat")
+     );
 
    if (file.open(QIODevice::WriteOnly))
    {//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;

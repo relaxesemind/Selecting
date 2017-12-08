@@ -13,6 +13,13 @@
 #include <QPoint>
 #include <QString>
 #include <QColor>
+#include <QFileDialog>
+
+static auto getFileName = []()->
+auto {
+    return QFileDialog::getOpenFileName
+    (nullptr, "Select image", "", "*.jpg *.jpeg *.bmp *.png");
+};
 
 class MGraphics : public QGraphicsView
 {
@@ -21,6 +28,7 @@ class MGraphics : public QGraphicsView
     using pItem = std::unique_ptr<PXitem>;
     using pSlider = std::unique_ptr<QSlider>;
     using pLabel = std::unique_ptr<QLabel>;
+    using Ellipse = std::unique_ptr<QGraphicsEllipseItem>;
 public:
     using Labels = QVector<QVector<quint64>>;
     using Labels_row = QVector<quint64>;
@@ -31,13 +39,15 @@ public:
    static Labels data_01; // HERE LABELS DATA
    static Objects data_obj; // HERE OBJECTS
 
-   const QImage& get_bin_img()
+   const QImage& get_bin_img()const
    {//getter of threshold image
        return b_img;
    }
    void backward(); //ctrl_z
    void forward(); //ctrl_y
    void autoThreshold();//breadley-rot
+
+   void setthread_ON_WORK(bool value);
 
 protected:
   void mouseMoveEvent(QMouseEvent *event)override;
@@ -62,12 +72,13 @@ private slots:
   void Slider_Release();
 
 private:
-  bool on_img(int,int); //predicate : true if cursor on image
-  QPoint transform(QPoint); // transform coordinates (local need)
+  bool on_img(int,int)const; //predicate : true if cursor on image
+  bool on_img(QPoint)const;
+  QPoint transform(QPoint)const; // transform coordinates (local need)
   QPoint drawCurve_andGetCenter(QImage&); //return centerMass of curve
   void ShowObjectUnderCursor(QMouseEvent*); //highlight objects
-  bool decide_to_draw(QPoint);//local logic
-  bool dataIsReady();//logic
+  bool decide_to_draw(QPoint)const;//local logic
+  bool dataIsReady()const;//logic
   bool isCorrectRelease(QMouseEvent*);//logic
   bool PXtoNull(pItem&&);//delete item from scene safely
   void newPX(pItem&&,const QPixmap&);//add new item to scene smartly
@@ -78,6 +89,7 @@ private:
   char cursor_mode; //0 - view(nothing), 1 - draw, 2 - erase
   bool drawingFlag;
   QColor ColorObj; // color of "highlighted" object
+  bool thread_ON_WORK; // true is worker thread is not done
 
   pLabel txt; // show theshold value
   pLabel otxt; //show opacity value
@@ -95,6 +107,8 @@ private:
   pItem titem; // contained threshold image on scene
   pItem track_item; // contained temp image (highlight object)
   pItem randItem; // contained randomize-colored image
+
+  Ellipse CircleOnCur;
 };
 
 #endif // MGRAPHICS_H

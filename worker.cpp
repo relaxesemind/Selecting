@@ -10,14 +10,13 @@
 
 MGraphics::Labels MGraphics::data_01;
 MGraphics::Objects MGraphics::data_obj;
+const QRgb black = qRgb(0,0,0);
 
 inline bool inner(size_t x, size_t y, MGraphics::Labels& V)
 {//return true if d is inner point
  //dangerous function. May cause out of range!
     return bool(V[y][x + 1])&&(V[y][x - 1])&&(V[y + 1][x])&&(V[y - 1][x]);
 }
-
-const QRgb black = qRgb(0,0,0);
 
 inline bool isBlack(int x, int y, const QImage& im)
 {
@@ -149,6 +148,5 @@ void Worker::doWork()//heavy function
     MGraphics::data_01 = std::move(Labels);
     MGraphics::data_obj = std::move(V);
 
-    emit EnableView(true);
     emit workFinished();
 }

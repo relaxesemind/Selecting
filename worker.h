@@ -14,7 +14,6 @@ class Worker : public QObject
         void doWork();
     signals:
         void workFinished();
-        void EnableView(bool);
     private:
         QImage bin;
 };
