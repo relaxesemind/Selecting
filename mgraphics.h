@@ -33,8 +33,7 @@ public:
     using Labels = QVector<QVector<quint64>>;
     using Labels_row = QVector<quint64>;
     using Objects = QVector<S_area>;
-   MGraphics();
-   ~MGraphics();
+    MGraphics();
 
    static Labels data_01; // HERE LABELS DATA
    static Objects data_obj; // HERE OBJECTS
@@ -84,6 +83,7 @@ private:
   void newPX(pItem&&,const QPixmap&);//add new item to scene smartly
   void newPX(pItem&&,const QImage&);//overload
   void newPX(pItem&&,QImage&&);//overload
+  void recalculation();
 
   int thickness_pen; //>=1
   char cursor_mode; //0 - view(nothing), 1 - draw, 2 - erase

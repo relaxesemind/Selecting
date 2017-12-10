@@ -1,5 +1,6 @@
 #include "mgraphics.h"
 #include "single_area.h"
+#include "worker.h"
 
 #include <QDebug>
 #include <QList>
@@ -12,6 +13,7 @@
 #include <cmath>
 #include <random>
 #include <chrono>
+#include <QThread>
 #include <QFloat16>
 
 //declaration of constants
@@ -65,10 +67,40 @@ public:
 };
 //
 
-
-MGraphics::~MGraphics()
+void MGraphics::recalculation()
 {
+    // if image exist
+    // Create new thread and new Worker
+    // Worker is class which forms vector of objects from bin image
+    // all is safe and auto self-destroying
+         if (b_img.isNull()) return;
 
+         this->setthread_ON_WORK(true);
+         QThread* thread = new QThread();
+         Worker*    task = new Worker(b_img);
+    //--------------------------------------------------------------------
+         task -> moveToThread(thread);
+    //--------------------------------------------------------------------
+         this->setEnabled(false);
+
+         connect(thread,&QThread::started,
+                 task, &Worker::doWork,Qt::DirectConnection);
+         connect(task,&Worker::workFinished,
+                 thread,&QThread::quit,Qt::DirectConnection);
+         connect(task,&Worker::workFinished,
+                 this,[=](){
+             this->setEnabled(true);
+         });
+         //automatically delete thread and task object when work is done:
+         connect(thread,&QThread::finished,
+                 task,&Worker::deleteLater,Qt::DirectConnection);
+         connect(thread,&QThread::finished,
+                 thread,&QThread::deleteLater,Qt::DirectConnection);
+         connect(thread,&QThread::finished,this,[=](){
+             this->setthread_ON_WORK(false);
+         });
+    //--------------------------------------------------------------------
+         thread->start();
 }
 
 MGraphics::MGraphics():thickness_pen(2), cursor_mode(0),drawingFlag(false),ColorObj(default_color)
@@ -152,7 +184,7 @@ void MGraphics::OSlider_Change(int value)
  //between 0.0 (transparent) and 1.0 (opaque)
     if (titem && titem->scene() == &scene)
     {
-        auto opacity = qreal(value) / 100;
+        qreal opacity = qreal(value) / 100;
         otxt->setText("Opacity level is " + QString::number(value));
         titem->setOpacity(opacity);
     }
@@ -532,8 +564,10 @@ QPoint getStartPoint(const QImage& img, QPoint CenterMass)
 QPoint MGraphics::drawCurve_andGetCenter(QImage& img)
 {
     quint32 N = 0;
-    qreal avgX = 0.0F; // average X coordinate
-    qreal avgY = 0.0F; // average Y coordinate
+    qreal avgX = 0.0; // average X coordinate
+    qreal avgY = 0.0; // average Y coordinate
+    //QVector<QPoint> ConvexPolygon;
+
     while (!line_items.empty())//size line_items == size lines
     {
         //reWrite bin image
@@ -644,6 +678,7 @@ void MGraphics::keyPressEvent(QKeyEvent *e)
         case Qt::Key_Y: forward(); break;
         case Qt::Key_T: autoThreshold(); break;
         case Qt::Key_O: MGraphics::load_from_file(getFileName()); break;
+        case Qt::Key_R: MGraphics::recalculation(); break;
         }
     }
 }
