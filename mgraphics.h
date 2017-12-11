@@ -45,8 +45,9 @@ public:
    void backward(); //ctrl_z
    void forward(); //ctrl_y
    void autoThreshold();//breadley-rot
-
+   bool dataIsReady()const;//true if data was calc
    void setthread_ON_WORK(bool value);
+
 
 protected:
   void mouseMoveEvent(QMouseEvent *event)override;
@@ -77,7 +78,6 @@ private:
   QPoint drawCurve_andGetCenter(QImage&); //return centerMass of curve
   void ShowObjectUnderCursor(QMouseEvent*); //highlight objects
   bool decide_to_draw(QPoint)const;//local logic
-  bool dataIsReady()const;//logic
   bool isCorrectRelease(QMouseEvent*);//logic
   bool PXtoNull(pItem&&);//delete item from scene safely
   void newPX(pItem&&,const QPixmap&);//add new item to scene smartly

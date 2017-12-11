@@ -7,6 +7,10 @@
 #include <QStack>
 #include <QPoint>
 #include <QDebug>
+#include <QIODevice>
+#include <QDate>
+#include <QTime>
+#include <QTextStream>
 
 MGraphics::Labels MGraphics::data_01;
 MGraphics::Objects MGraphics::data_obj;
@@ -149,4 +153,39 @@ void Worker::doWork()//heavy function
     MGraphics::data_obj = std::move(V);
 
     emit workFinished();
+}
+
+void SaveToFile(QTextStream& out)
+{//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;
+    for (int i = 0; i < MGraphics::data_obj.size(); ++i)
+    {
+        out << QString::number(i) + ".";
+        for (int j = 0; j < MGraphics::data_obj[i].Points.size(); ++j)
+        {
+          out << QString::number(MGraphics::data_obj[i].Points[j].x())+ ".";
+          out << QString::number(MGraphics::data_obj[i].Points[j].y())+ ".";
+        }
+        out << QString("C.");
+        for (int j = 0; j < MGraphics::data_obj[i].CPoints.size(); ++j)
+        {
+          out << QString::number(MGraphics::data_obj[i].CPoints[j].x())+ ".";
+          out << QString::number(MGraphics::data_obj[i].CPoints[j].y())+ ".";
+        }
+        out << QString(';');
+    }
+   //out << QString(';');
+}
+
+void Worker::saveData()
+{
+       QFile file(filePath);
+
+       if (file.open(QIODevice::WriteOnly))
+       {//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;
+           QTextStream stream(&file);
+           SaveToFile(stream);
+       }
+     file.close();
+
+     emit dataIsSaved();
 }

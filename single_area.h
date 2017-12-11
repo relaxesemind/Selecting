@@ -3,9 +3,7 @@
 
 #include <QVector>
 #include <QPoint>
-#include <QString>
 
-const QString dot('.');
 
 struct S_area
 {

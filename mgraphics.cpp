@@ -313,7 +313,7 @@ void MGraphics::ObjectsColorChange(QColor col)
     ColorObj = col;
 }
 
-inline bool MGraphics::dataIsReady() const
+bool MGraphics::dataIsReady() const
 {
    return bool(!data_01.empty() && !data_obj.empty() && data_01.size() == pm.height());
 }

@@ -11,13 +11,15 @@
 #include <QColor>
 #include <QAction>
 #include <QMenu>
-#include <QIODevice>
 #include <QDate>
 #include <QTime>
-#include <QTextStream>
+#include <QMessageBox>
 #include <QKeyEvent>
 
 const qreal zoomMultiple = 1.05;
+const QString Data_dir = QString("DATA/DATA ")
+        + QDate::currentDate().toString(QString("dd_MM_yyyy")) + QString(" ")
+            + QTime::currentTime().toString(QString("hh_mm_ss"));
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -69,7 +71,12 @@ void MainWindow::on_actionStart_algo_triggered()
 // Create new thread and new Worker
 // Worker is class which forms vector of objects from bin image
 // all is safe and auto self-destroying
-     if (View->get_bin_img().isNull()) return;
+     if (View->get_bin_img().isNull())
+     {
+         QMessageBox::information(nullptr,
+          QObject::tr("Сообщение"),tr("Бинаризуйте изображение..."));
+         return;
+     }
 
      View->setthread_ON_WORK(true);
      QThread* thread = new QThread();
@@ -141,6 +148,7 @@ void MainWindow::on_actionColor_of_objects_triggered()
 
     QColor col = QColorDialog::getColor
             (Qt::white,this,"Choose the objects color");
+    if (col.isValid())
     emit send_Obj_color(col);
 }
 
@@ -206,41 +214,35 @@ void MainWindow::on_actionauto_threshold_Breadley_Rot_triggered()
     View->autoThreshold();
 }
 
-void SaveToFile(QTextStream& out)
-{//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;
-    for (int i = 0; i < MGraphics::data_obj.size(); ++i)
-    {
-        out << QString::number(i) + ".";
-        for (int j = 0; j < MGraphics::data_obj[i].Points.size(); ++j)
-        {
-          out << QString::number(MGraphics::data_obj[i].Points[j].x())+ ".";
-          out << QString::number(MGraphics::data_obj[i].Points[j].y())+ ".";
-        }
-        out << QString("C.");
-        for (int j = 0; j < MGraphics::data_obj[i].CPoints.size(); ++j)
-        {
-          out << QString::number(MGraphics::data_obj[i].CPoints[j].x())+ ".";
-          out << QString::number(MGraphics::data_obj[i].CPoints[j].y())+ ".";
-        }
-        out << QString(';');
-    }
-   //out << QString(';');
-}
-
 void MainWindow::on_action5_triggered()
 {//save data
-   QString filename = QString("DATA/DATA ")
-           + QDate::currentDate().toString(QString("dd_MM_yyyy")) + QString(" ")
-               + QTime::currentTime().toString(QString("hh_mm_ss"));
-   QFile file(
-     QFileDialog::getSaveFileName
-      (this,"SAVE DATA",filename,"*.dat")
-     );
 
-   if (file.open(QIODevice::WriteOnly))
-   {//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;
-       QTextStream stream(&file);
-       SaveToFile(stream);
-   }
- file.close();
+    if (!View->dataIsReady()) {
+        QMessageBox::information(nullptr,QObject::tr("Сообщение"),tr("Объекты еще не выделены..."));
+        return;
+    }
+
+ //--------------------------------------------------------------------
+      QString path = QFileDialog::getSaveFileName
+               (this,"SAVE DATA",Data_dir,"*.dat");
+      if (path.isNull()) return;
+
+      QThread* thread = new QThread();
+      Worker*  SaveTask = new Worker(path);
+ //--------------------------------------------------------------------
+      SaveTask -> moveToThread(thread);
+ //--------------------------------------------------------------------
+      connect(thread,&QThread::started,
+              SaveTask, &Worker::saveData,Qt::DirectConnection);
+      connect(SaveTask,&Worker::dataIsSaved,
+              thread,&QThread::quit,Qt::DirectConnection);
+
+      //automatically delete thread and task object when work is done:
+      connect(thread,&QThread::finished,
+              SaveTask,&Worker::deleteLater,Qt::DirectConnection);
+      connect(thread,&QThread::finished,
+              thread,&QThread::deleteLater,Qt::DirectConnection);
+
+ //--------------------------------------------------------------------
+      thread->start();
 }
