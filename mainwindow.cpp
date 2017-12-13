@@ -11,15 +11,10 @@
 #include <QColor>
 #include <QAction>
 #include <QMenu>
-#include <QDate>
-#include <QTime>
 #include <QMessageBox>
 #include <QKeyEvent>
 
 const qreal zoomMultiple = 1.05;
-const QString Data_dir = QString("DATA/DATA ")
-        + QDate::currentDate().toString(QString("dd_MM_yyyy")) + QString(" ")
-            + QTime::currentTime().toString(QString("hh_mm_ss"));
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -51,7 +46,7 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
     if (e->key() && e->modifiers() & Qt::ControlModifier)
     {
         switch (e->key()) {
-        case Qt::Key_O: emit send_filePath(getFileName()); break;
+        case Qt::Key_O: emit send_filePath(getFileName(files::Load)); break;
         case Qt::Key_T: View->autoThreshold(); break;
         case Qt::Key_R: MainWindow::on_actionStart_algo_triggered(); break;
         case Qt::Key_A: emit send_colorize_obj(); break;
@@ -62,7 +57,7 @@ void MainWindow::keyPressEvent(QKeyEvent* e)
 
 void MainWindow::on_actionLoad_file_triggered()
 {//Signal from ui to load image
-    emit send_filePath(getFileName());
+    emit send_filePath(getFileName(files::Load));
 }
 
 void MainWindow::on_actionStart_algo_triggered()
@@ -223,8 +218,7 @@ void MainWindow::on_action5_triggered()
     }
 
  //--------------------------------------------------------------------
-      QString path = QFileDialog::getSaveFileName
-               (this,"SAVE DATA",Data_dir,"*.dat");
+      QString path = getFileName(files::Save);
       if (path.isNull()) return;
 
       QThread* thread = new QThread();

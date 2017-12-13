@@ -14,12 +14,27 @@
 #include <QString>
 #include <QColor>
 #include <QFileDialog>
+#include <QDate>
+#include <QTime>
 
-static auto getFileName = []()->
+enum files : int {Load, Save};
+
+const QString Data_dir = QString("DATA/DATA ")
+        + QDate::currentDate().toString(QString("dd_MM_yyyy")) + QString(" ")
+            + QTime::currentTime().toString(QString("hh_mm_ss"));
+
+static auto getFileName = [](auto type)->
 auto {
-    return QFileDialog::getOpenFileName
-    (nullptr, "Select image", "", "*.jpg *.jpeg *.bmp *.png");
+    switch (type) {
+    case files::Load: return QFileDialog::getOpenFileName
+                (nullptr, "Select image", "", "*.jpg *.jpeg *.bmp *.png");
+        break;
+    case files::Save: return QFileDialog::getSaveFileName
+                (nullptr,"SAVE DATA",Data_dir,"*.dat");
+        break;
+    }
 };
+
 
 class MGraphics : public QGraphicsView
 {
@@ -72,7 +87,7 @@ private slots:
   void Slider_Release();
 
 private:
-  bool on_img(int,int)const; //predicate : true if cursor on image
+  bool on_img(qint32, qint32)const; //predicate : true if cursor on image
   bool on_img(QPoint)const;
   QPoint transform(QPoint)const; // transform coordinates (local need)
   QPoint drawCurve_andGetCenter(QImage&); //return centerMass of curve

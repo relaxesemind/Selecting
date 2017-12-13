@@ -18,13 +18,13 @@
 
 //declaration of constants
 //
-const int SLIDER_X_POS = 8;
-const int SLIDER_Y_POS = 8;
-const int SLIDER_WIDTH = 200;
-const int SLIDER_HEIGHT = 20;
-const uint BIN_BLACK = 0x0;
-const uint BIN_WHITE = 0xFFFFFF;
-const uint ARGB_A = 0xFF000000;
+const qint32 SLIDER_X_POS = 8;
+const qint32 SLIDER_Y_POS = 8;
+const qint32 SLIDER_WIDTH = 200;
+const qint32 SLIDER_HEIGHT = 20;
+const qint32 BIN_BLACK = 0x0;
+const quint32 BIN_WHITE = 0xFFFFFF;
+const quint32 ARGB_A = 0xFF000000;
 const qreal zoomMultiple = 1.05;
 const QRgb default_color = qRgb(0,145,218);
 const QRgb black = qRgb(0,0,0);
@@ -190,7 +190,7 @@ void MGraphics::OSlider_Change(int value)
     }
 }
 
-uint toGrayScale(const QImage& image,int x ,int y)
+uint toGrayScale(const QImage& image,qint32 x ,qint32 y)
 {//I = 0.2125R + 0.7154G + 0.0721B
  //return GrayScale pixel(x,y) from image with half precision
  //mostly fast;
@@ -203,48 +203,48 @@ QImage Bradley_Rot(const QImage& src)
 {//main idea from this : https://habrahabr.ru/post/278435
  //my own implementation
 
-    const int w = src.width();
-    const int h = src.height();
+    const qint32 w = src.width();
+    const qint32 h = src.height();
     QImage ret_img(w,h,src.format());
-    const int S = w / 8;
+    const qint32 S = w / 8;
     const float t = 0.15F;
-    int s2 = S / 2;
+    qint32 s2 = S / 2;
     //get integral_image
     //S(x, y) = I(x, y) + S(x-1, y) + S(x, y-1) – S(x-1, y-1);
     MGraphics::Labels integral_image
             (h,MGraphics::Labels_row(w,0));
-    for (int x = 0; x < w; ++x) integral_image[0][x] = toGrayScale(src,x,0);
-    for (int y = 0; y < h; ++y) integral_image[y][0] = toGrayScale(src,0,y);
+    for (qint32 x = 0; x < w; ++x) integral_image[0][x] = toGrayScale(src,x,0);
+    for (qint32 y = 0; y < h; ++y) integral_image[y][0] = toGrayScale(src,0,y);
 
-    for (int y = 1; y < h; ++y)
+    for (qint32 y = 1; y < h; ++y)
     {
-        for (int x = 1; x < w; ++x)
+        for (qint32 x = 1; x < w; ++x)
         {
             integral_image[y][x] = toGrayScale(src,x,y) + integral_image[y][x-1]
                     + integral_image[y-1][x] - integral_image[y-1][x-1];
         }
     }
 
-    for (int y = 0; y < h; ++y)
+    for (qint32 y = 0; y < h; ++y)
     {
-        for (int x = 0; x < w; ++x)
+        for (qint32 x = 0; x < w; ++x)
         {
-            int x1 = x - s2;
-            int x2 = x + s2;
-            int y1 = y - s2;
-            int y2 = y + s2;
+            qint32 x1 = x - s2;
+            qint32 x2 = x + s2;
+            qint32 y1 = y - s2;
+            qint32 y2 = y + s2;
 
             if (x1 < 0) x1 = 0;
             if (x2 >= w) x2 = w - 1;
             if (y1 < 0) y1 = 0;
             if (y2 >= h) y2 = h-1;
 
-            int count = (x2-x1)*(y2-y1);
+            qint32 count = (x2-x1)*(y2-y1);
             //S(x, y) = S(A) + S(D) – S(B) – S(C)
-            long sum = integral_image[y2][x2] - integral_image[y1][x2]
+            qint32 sum = integral_image[y2][x2] - integral_image[y1][x2]
                     - integral_image[y2][x1] + integral_image[y1][x1];
-            if (long(toGrayScale(src,x,y) * count)
-                    < long(sum * (1.0F - t)))
+            if ((toGrayScale(src,x,y) * count)
+                    < (sum * (1.0F - t)))
             {
                 ret_img.setPixel(x,y,BIN_BLACK);
             }else
@@ -257,15 +257,15 @@ QImage Bradley_Rot(const QImage& src)
     return ret_img;
 }
 
-QImage threshold_img(const QImage& source_img, int threshold_value)
+QImage threshold_img(const QImage& source_img, qint32 threshold_value)
 {//by threshold value
  //return new image
-    int const h = source_img.height();
-    int const w = source_img.width();
+    qint32 const h = source_img.height();
+    qint32 const w = source_img.width();
     QImage ret_img(w,h,source_img.format());
 
-    for (int i = 0;i < w; ++i)
-      for(int j = 0;j < h; ++j)
+    for (qint32 i = 0;i < w; ++i)
+      for(qint32 j = 0;j < h; ++j)
       {
          QRgb p = source_img.pixel(i,j);
          if (qRed(p) + qGreen(p) + qBlue(p)
@@ -279,7 +279,7 @@ QImage threshold_img(const QImage& source_img, int threshold_value)
     return ret_img; //is std::move(ret_img);
 }
 
-void MGraphics::Slider_Change(int value)
+void MGraphics::Slider_Change(qint32 value)
 {//Slider info
     txt->setText(QString("threshold level is ")
                  + QString::number(value));
@@ -295,7 +295,7 @@ void MGraphics::Slider_Release()
     newPX(std::move(titem),b_img);
 }
 
-inline bool MGraphics::on_img(int x,int y) const
+inline bool MGraphics::on_img(qint32 x,qint32 y) const
 {//return true if (x,y) is pixmap point
     return bool (!((x < 0)||(y < 0)||
                    (x + 1 > pm.width())||
@@ -321,8 +321,8 @@ bool MGraphics::dataIsReady() const
 void MGraphics::ShowObjectUnderCursor(QMouseEvent *event)
 {//highlight
     QPoint p = transform(event->pos()); //current pos
-    int x = p.x();
-    int y = p.y();
+    qint32 x = p.x();
+    qint32 y = p.y();
     if (dataIsReady() && cursor_mode != 2)
     {
         auto id = data_01[y][x];
@@ -394,8 +394,8 @@ void MGraphics::newPX(pItem&& item, QImage&& img)
 QPoint MGraphics::transform(QPoint pos) const
 {//global cursor pos to local_scene coordinated
     QPointF l = mapToScene(pos.x(),pos.y());
-    int x = static_cast<int> (l.x());
-    int y = static_cast<int> (l.y());
+    qint32 x = static_cast<qint32> (l.x());
+    qint32 y = static_cast<qint32> (l.y());
     return QPoint(x,y);
 }
 
@@ -461,11 +461,11 @@ void MGraphics::mousePressEvent(QMouseEvent *event)
     }
 }
 
-auto get_prime(int Radius)
+auto get_prime(qint32 Radius)
 {//getter min drawing primitive
    QVector<QPoint> res;
-   for (int y = -Radius; y < Radius; ++y)
-       for (int x = -Radius; x < Radius; ++x)
+   for (qint32 y = -Radius; y < Radius; ++y)
+       for (qint32 x = -Radius; x < Radius; ++x)
        {
            if (std::pow(x,2) + std::pow(y,2)
                    <= std::pow(Radius,2))
@@ -478,8 +478,8 @@ auto get_prime(int Radius)
 
 class SecureDrawing
 {//Class secure safely drawing
-    int w;
-    int h;
+    qint32 w;
+    qint32 h;
     QPoint pt;
     uint clr;
     QImage& ref;
@@ -499,10 +499,10 @@ public:
     }
 };
 
-void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, int thickness = 2)
+void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, qint32 thickness = 2)
 {
     QVector2D n(p2 - p1);
-    int len = static_cast<int> (n.length());
+    qint32 len = static_cast<qint32> (n.length());
     n.normalize();
     QVector2D v(p1);
     auto prime = get_prime(thickness);
@@ -517,7 +517,7 @@ void drawLineOnQImage(QImage& img,QPointF p1,QPointF p2, const uint color, int t
     }
 }
 
-inline bool isBlack(int x, int y, const QImage& im)
+inline bool isBlack(qint32 x, qint32 y, const QImage& im)
 {
     return bool(im.pixel(x,y) == black);
 }
@@ -527,14 +527,14 @@ void fill_area(QImage& img, QPoint Start_point)
 
   QStack<QPoint> depth;
   depth.push(Start_point);
-  const int w = img.width();
-  const int h = img.height();
+  const qint32 w = img.width();
+  const qint32 h = img.height();
 
   while (!depth.empty())
   {
     QPoint t = depth.pop();
-    int x = t.x();
-    int y = t.y();
+    qint32 x = t.x();
+    qint32 y = t.y();
     img.setPixel(t,BIN_BLACK);
 
     if((x + 1 < w)&&(!isBlack(x+1,y,img)))
@@ -591,7 +591,7 @@ bool MGraphics::isCorrectRelease(QMouseEvent *event)
  //
     drawingFlag = false;
     QPoint p = transform(event->pos());
-    int x = p.x(); int y = p.y();
+    qint32 x = p.x(); qint32 y = p.y();
     EndPoint = p;
     if (cursor_mode == 0) return false;
     if (!on_img(x,y) || !dataIsReady()) {
@@ -677,7 +677,7 @@ void MGraphics::keyPressEvent(QKeyEvent *e)
         case Qt::Key_Z: backward(); break;
         case Qt::Key_Y: forward(); break;
         case Qt::Key_T: autoThreshold(); break;
-        case Qt::Key_O: MGraphics::load_from_file(getFileName()); break;
+        case Qt::Key_O: MGraphics::load_from_file(getFileName(files::Load)); break;
         case Qt::Key_R: MGraphics::recalculation(); break;
         }
     }
@@ -721,7 +721,7 @@ void MGraphics::wheelEvent(QWheelEvent *event)
     }
 }
 
-void MGraphics::setThickness(int number)
+void MGraphics::setThickness(qint32 number)
 {
    thickness_pen = number;
 }

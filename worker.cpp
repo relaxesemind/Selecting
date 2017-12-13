@@ -16,30 +16,30 @@ MGraphics::Labels MGraphics::data_01;
 MGraphics::Objects MGraphics::data_obj;
 const QRgb black = qRgb(0,0,0);
 
-inline bool inner(size_t x, size_t y, MGraphics::Labels& V)
+inline bool inner(qint32 x, qint32 y, MGraphics::Labels& V)
 {//return true if d is inner point
  //dangerous function. May cause out of range!
-    return bool(V[y][x + 1])&&(V[y][x - 1])&&(V[y + 1][x])&&(V[y - 1][x]);
+    return (V[y][x + 1])&&(V[y][x - 1])&&(V[y + 1][x])&&(V[y - 1][x]);
 }
 
-inline bool isBlack(int x, int y, const QImage& im)
+inline bool isBlack(qint32 x, qint32 y, const QImage& im)
 {
-    return bool(im.pixel(x,y) == black);
+    return im.pixel(x,y) == black;
 }
 
-void fill(const QImage& img, MGraphics::Labels& V, int _x, int _y, quint64 L)
+void fill(const QImage& img, MGraphics::Labels& V, qint32 _x, qint32 _y, quint64 L)
 {
   QPoint t;
   QStack<QPoint> depth;
   depth.push(QPoint(_x,_y));
-  const int w = img.width();
-  const int h = img.height();
+  const qint32 w = img.width();
+  const qint32 h = img.height();
 
   while (!depth.empty())
   {
     t = depth.pop();
-    int x = t.rx();
-    int y = t.ry();
+    qint32 x = t.rx();
+    qint32 y = t.ry();
     V[y][x] = L; // filling.
 
     if((x + 1 < w)&&(isBlack(x+1,y,img))&&(V[y][x + 1] == 0))
@@ -63,16 +63,16 @@ void fill(const QImage& img, MGraphics::Labels& V, int _x, int _y, quint64 L)
 
 void Worker::doWork()//heavy function
 {//main calculate
-    int const _h = bin.height();
-    int const _w = bin.width();
+    qint32 const _h = bin.height();
+    qint32 const _w = bin.width();
     quint64 L = 1; // starting id value
 
     MGraphics::Labels Labels
             (_h, MGraphics::Labels_row(_w,0));
 
 //labeling__________________________________________________________________________
-    for(auto y = 0; y < _h; ++y)
-      for(auto x = 0; x < _w; ++x)
+    for(qint32 y = 0; y < _h; ++y)
+      for(qint32 x = 0; x < _w; ++x)
       {
        if((!Labels[y][x])&&(isBlack(x,y,bin)))
        {
@@ -81,10 +81,10 @@ void Worker::doWork()//heavy function
       }
 
 //form objects______________________________________________________________________
-    const size_t size = --L; // size == num of objects
+    const quint64 size = --L; // size == num of objects
     MGraphics::Objects V(size);
 
-    for(size_t i = 0;i < size; ++i)
+    for(quint64 i = 0;i < size; ++i)
      {
        V[i] = S_area(i);
      }
@@ -157,16 +157,16 @@ void Worker::doWork()//heavy function
 
 void SaveToFile(QTextStream& out)
 {//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;
-    for (int i = 0; i < MGraphics::data_obj.size(); ++i)
+    for (qint32 i = 0; i < MGraphics::data_obj.size(); ++i)
     {
         out << QString::number(i) + ".";
-        for (int j = 0; j < MGraphics::data_obj[i].Points.size(); ++j)
+        for (qint32 j = 0; j < MGraphics::data_obj[i].Points.size(); ++j)
         {
           out << QString::number(MGraphics::data_obj[i].Points[j].x())+ ".";
           out << QString::number(MGraphics::data_obj[i].Points[j].y())+ ".";
         }
         out << QString("C.");
-        for (int j = 0; j < MGraphics::data_obj[i].CPoints.size(); ++j)
+        for (qint32 j = 0; j < MGraphics::data_obj[i].CPoints.size(); ++j)
         {
           out << QString::number(MGraphics::data_obj[i].CPoints[j].x())+ ".";
           out << QString::number(MGraphics::data_obj[i].CPoints[j].y())+ ".";
@@ -176,10 +176,10 @@ void SaveToFile(QTextStream& out)
    //out << QString(';');
 }
 
+
 void Worker::saveData()
 {
        QFile file(filePath);
-
        if (file.open(QIODevice::WriteOnly))
        {//FORMAT "id"."x"."y"."x"."y"."x"."y"."x"."y"..."C"."x"."y"...;
            QTextStream stream(&file);

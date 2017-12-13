@@ -17,8 +17,8 @@ struct S_area
     S_area& operator=(const S_area& obj)
     {
         id = obj.id;
-        std::copy(obj.Points.begin(),obj.Points.end(),Points.begin());
-        std::copy(obj.CPoints.begin(),obj.CPoints.end(),CPoints.begin());
+        Points = obj.Points;
+        CPoints = obj.CPoints;
         return *this;
     }
 
