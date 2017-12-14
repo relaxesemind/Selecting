@@ -1,4 +1,4 @@
-#include "worker.h"
+#include "core.h"
 #include "single_area.h"
 #include "mgraphics.h"
 
@@ -61,7 +61,7 @@ void fill(const QImage& img, MGraphics::Labels& V, qint32 _x, qint32 _y, quint64
   }
 }
 
-void Worker::doWork()//heavy function
+void Core::select()//heavy function
 {//main calculate
     qint32 const _h = bin.height();
     qint32 const _w = bin.width();
@@ -152,7 +152,7 @@ void Worker::doWork()//heavy function
     MGraphics::data_01 = std::move(Labels);
     MGraphics::data_obj = std::move(V);
 
-    emit workFinished();
+    emit SelectingFinished();
 }
 
 void SaveToFile(QTextStream& out)
@@ -177,7 +177,7 @@ void SaveToFile(QTextStream& out)
 }
 
 
-void Worker::saveData()
+void Core::saveData()
 {
        QFile file(filePath);
        if (file.open(QIODevice::WriteOnly))

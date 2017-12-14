@@ -1,0 +1,425 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1188</width>
+    <height>666</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Selecting</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="resource.qrc">
+    <normaloff>:/res/mainIcon.png</normaloff>:/res/mainIcon.png</iconset>
+  </property>
+  <widget class="QWidget" name="centralWidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QGridLayout" name="gridLayout"/>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1188</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+    <addaction name="LoadFile_button"/>
+   </widget>
+   <widget class="QMenu" name="menuSelect_objects">
+    <property name="title">
+     <string>Service</string>
+    </property>
+    <addaction name="actionStart_algo"/>
+    <addaction name="separator"/>
+    <addaction name="actionauto_threshold_Breadley_Rot"/>
+    <addaction name="actionColor_of_objects"/>
+    <addaction name="actionColorize_all"/>
+    <addaction name="separator"/>
+   </widget>
+   <widget class="QMenu" name="menuAutor">
+    <property name="title">
+     <string>HELP</string>
+    </property>
+    <addaction name="actionHotKeys"/>
+    <addaction name="actionabout"/>
+   </widget>
+   <addaction name="menuFile"/>
+   <addaction name="menuSelect_objects"/>
+   <addaction name="menuAutor"/>
+  </widget>
+  <widget class="QToolBar" name="mainToolBar">
+   <attribute name="toolBarArea">
+    <enum>LeftToolBarArea</enum>
+   </attribute>
+   <attribute name="toolBarBreak">
+    <bool>false</bool>
+   </attribute>
+   <addaction name="separator"/>
+   <addaction name="action1"/>
+   <addaction name="action2"/>
+   <addaction name="separator"/>
+   <addaction name="action3"/>
+   <addaction name="action4"/>
+   <addaction name="separator"/>
+   <addaction name="action5"/>
+  </widget>
+  <widget class="QStatusBar" name="statusBar"/>
+  <widget class="QDockWidget" name="dockWidget_6">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <property name="minimumSize">
+    <size>
+     <width>58</width>
+     <height>77</height>
+    </size>
+   </property>
+   <attribute name="dockWidgetArea">
+    <number>4</number>
+   </attribute>
+   <widget class="QWidget" name="dockWidgetContents_9">
+    <widget class="QWidget" name="layoutWidget">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>10</y>
+       <width>798</width>
+       <height>42</height>
+      </rect>
+     </property>
+     <layout class="QHBoxLayout" name="horizontalLayout_4">
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="QLabel" name="label_2">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Pen thickness</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSlider" name="horizontalSlider">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>20</number>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QLineEdit" name="lineEdit">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>55</width>
+            <height>16777215</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>2px</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>30</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <widget class="Line" name="line">
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>10</height>
+           </size>
+          </property>
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_3">
+        <item>
+         <widget class="QLabel" name="label">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>98</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="text">
+           <string>Drawing undo / redo</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Fixed</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>25</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QCommandLinkButton" name="commandLinkButton">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>55</width>
+              <height>0</height>
+             </size>
+            </property>
+            <property name="text">
+             <string>        backward</string>
+            </property>
+            <property name="icon">
+             <iconset resource="resource.qrc">
+              <normaloff>:/res/backarrow.png</normaloff>:/res/backarrow.png</iconset>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <spacer name="horizontalSpacer_2">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+            <property name="sizeType">
+             <enum>QSizePolicy::Fixed</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+          <item>
+           <widget class="QCommandLinkButton" name="commandLinkButton_2">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="text">
+             <string>       forward</string>
+            </property>
+            <property name="icon">
+             <iconset resource="resource.qrc">
+              <normaloff>:/res/forward.png</normaloff>:/res/forward.png</iconset>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
+   </widget>
+  </widget>
+  <action name="action1">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/res/plus.png</normaloff>:/res/plus.png</iconset>
+   </property>
+   <property name="text">
+    <string>1</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom in</string>
+   </property>
+  </action>
+  <action name="action2">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/res/minus.png</normaloff>:/res/minus.png</iconset>
+   </property>
+   <property name="text">
+    <string>2</string>
+   </property>
+   <property name="toolTip">
+    <string>Zoom out</string>
+   </property>
+  </action>
+  <action name="action3">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/res/draw.png</normaloff>:/res/draw.png</iconset>
+   </property>
+   <property name="text">
+    <string>3</string>
+   </property>
+   <property name="toolTip">
+    <string>draw tool</string>
+   </property>
+  </action>
+  <action name="action4">
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/res/erase.png</normaloff>:/res/erase.png</iconset>
+   </property>
+   <property name="text">
+    <string>4</string>
+   </property>
+   <property name="toolTip">
+    <string>erase tool</string>
+   </property>
+  </action>
+  <action name="action5">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/res/Programming-Save-icon.png</normaloff>:/res/Programming-Save-icon.png</iconset>
+   </property>
+   <property name="text">
+    <string>5</string>
+   </property>
+   <property name="toolTip">
+    <string>Save data</string>
+   </property>
+  </action>
+  <action name="LoadFile_button">
+   <property name="text">
+    <string>Load file [Ctrl + O]</string>
+   </property>
+  </action>
+  <action name="actionStart_algo">
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/res/Start-2-icon.png</normaloff>:/res/Start-2-icon.png</iconset>
+   </property>
+   <property name="text">
+    <string>Select the objects and contours! [Ctrl + R]</string>
+   </property>
+  </action>
+  <action name="actionColor_of_objects">
+   <property name="text">
+    <string>Set color of objects</string>
+   </property>
+  </action>
+  <action name="actionColorize_all">
+   <property name="text">
+    <string>Colorize all [Ctrl + A]</string>
+   </property>
+  </action>
+  <action name="actionSet_thickness_of_pen_erase">
+   <property name="text">
+    <string>Set thickness of pen/erase</string>
+   </property>
+  </action>
+  <action name="actionHotKeys">
+   <property name="text">
+    <string>HotKeys...</string>
+   </property>
+  </action>
+  <action name="actionFAQ">
+   <property name="text">
+    <string>FAQ</string>
+   </property>
+  </action>
+  <action name="actionabout">
+   <property name="text">
+    <string>about</string>
+   </property>
+  </action>
+  <action name="actionauto_threshold_Breadley_Rot">
+   <property name="text">
+    <string>Auto threshold [Ctrl + T]</string>
+   </property>
+  </action>
+ </widget>
+ <layoutdefault spacing="6" margin="11"/>
+ <tabstops>
+  <tabstop>horizontalSlider</tabstop>
+  <tabstop>lineEdit</tabstop>
+  <tabstop>commandLinkButton</tabstop>
+  <tabstop>commandLinkButton_2</tabstop>
+ </tabstops>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>

@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include "mgraphics.h"
-#include "worker.h"
+#include "core.h"
 
 #include <QDebug>
 #include <QThread>
@@ -75,23 +75,23 @@ void MainWindow::on_actionStart_algo_triggered()
 
      View->setthread_ON_WORK(true);
      QThread* thread = new QThread();
-     Worker*    task = new Worker(View->get_bin_img());
+     Core*    task = new Core(View->get_bin_img());
 //--------------------------------------------------------------------
      task -> moveToThread(thread);
 //--------------------------------------------------------------------
      View->setEnabled(false);
 
      connect(thread,&QThread::started,
-             task, &Worker::doWork,Qt::DirectConnection);
-     connect(task,&Worker::workFinished,
+             task, &Core::select,Qt::DirectConnection);
+     connect(task,&Core::SelectingFinished,
              thread,&QThread::quit,Qt::DirectConnection);
-     connect(task,&Worker::workFinished,
+     connect(task,&Core::SelectingFinished,
              this,[=](){
          View->setEnabled(true);
      });
      //automatically delete thread and task object when work is done:
      connect(thread,&QThread::finished,
-             task,&Worker::deleteLater,Qt::DirectConnection);
+             task,&Core::deleteLater,Qt::DirectConnection);
      connect(thread,&QThread::finished,
              thread,&QThread::deleteLater,Qt::DirectConnection);
      connect(thread,&QThread::finished,this,[=](){
@@ -222,18 +222,18 @@ void MainWindow::on_action5_triggered()
       if (path.isNull()) return;
 
       QThread* thread = new QThread();
-      Worker*  SaveTask = new Worker(path);
+      Core*  SaveTask = new Core(path);
  //--------------------------------------------------------------------
       SaveTask -> moveToThread(thread);
  //--------------------------------------------------------------------
       connect(thread,&QThread::started,
-              SaveTask, &Worker::saveData,Qt::DirectConnection);
-      connect(SaveTask,&Worker::dataIsSaved,
+              SaveTask, &Core::saveData,Qt::DirectConnection);
+      connect(SaveTask,&Core::dataIsSaved,
               thread,&QThread::quit,Qt::DirectConnection);
 
       //automatically delete thread and task object when work is done:
       connect(thread,&QThread::finished,
-              SaveTask,&Worker::deleteLater,Qt::DirectConnection);
+              SaveTask,&Core::deleteLater,Qt::DirectConnection);
       connect(thread,&QThread::finished,
               thread,&QThread::deleteLater,Qt::DirectConnection);
 

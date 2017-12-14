@@ -1,6 +1,6 @@
 #include "mgraphics.h"
 #include "single_area.h"
-#include "worker.h"
+#include "core.h"
 
 #include <QDebug>
 #include <QList>
@@ -77,23 +77,23 @@ void MGraphics::recalculation()
 
          this->setthread_ON_WORK(true);
          QThread* thread = new QThread();
-         Worker*    task = new Worker(b_img);
+         Core*    task = new Core(b_img);
     //--------------------------------------------------------------------
          task -> moveToThread(thread);
     //--------------------------------------------------------------------
          this->setEnabled(false);
 
          connect(thread,&QThread::started,
-                 task, &Worker::doWork,Qt::DirectConnection);
-         connect(task,&Worker::workFinished,
+                 task, &Core::select,Qt::DirectConnection);
+         connect(task,&Core::SelectingFinished,
                  thread,&QThread::quit,Qt::DirectConnection);
-         connect(task,&Worker::workFinished,
+         connect(task,&Core::SelectingFinished,
                  this,[=](){
              this->setEnabled(true);
          });
          //automatically delete thread and task object when work is done:
          connect(thread,&QThread::finished,
-                 task,&Worker::deleteLater,Qt::DirectConnection);
+                 task,&Core::deleteLater,Qt::DirectConnection);
          connect(thread,&QThread::finished,
                  thread,&QThread::deleteLater,Qt::DirectConnection);
          connect(thread,&QThread::finished,this,[=](){
@@ -173,9 +173,9 @@ void MGraphics::load_from_file(const QString& path)
 //
     pm.load(path);
 //
-    newPX(std::move(sourceItem_from_image),pm);
-    MGraphics::centerOn(sourceItem_from_image.get());
-    MGraphics::fitInView(sourceItem_from_image.get(),Qt::KeepAspectRatio);
+    newPX(std::move(sourceItem),pm);
+    MGraphics::centerOn(sourceItem.get());
+    MGraphics::fitInView(sourceItem.get(),Qt::KeepAspectRatio);
     update();
 }
 
@@ -362,6 +362,7 @@ void MGraphics::newPX(pItem&& item,const QPixmap& pix)
     }
     update();
 }
+
 void MGraphics::newPX(pItem&& item,const QImage& img)
 {
     item = std::make_unique<MGraphics::PXitem>

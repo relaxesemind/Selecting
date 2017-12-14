@@ -4,18 +4,18 @@
 #include <QObject>
 #include <QImage>
 
-class Worker : public QObject
+class Core : public QObject
 {
     Q_OBJECT
     public:
-        Worker(const QImage& img): bin(img), filePath(QString()) {}
-        Worker(const QString& path): bin(QImage()), filePath(path) {}
+        Core(const QImage& img): bin(img), filePath(QString()) {}
+        Core(const QString& path): bin(QImage()), filePath(path) {}
 
     public slots:
-        void doWork();
+        void select();
         void saveData();
     signals:
-        void workFinished();
+        void SelectingFinished();
         void dataIsSaved();
     private:
         QImage bin;

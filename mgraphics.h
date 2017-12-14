@@ -32,6 +32,9 @@ auto {
     case files::Save: return QFileDialog::getSaveFileName
                 (nullptr,"SAVE DATA",Data_dir,"*.dat");
         break;
+    default:
+        return QString();
+        break;
     }
 };
 
@@ -118,7 +121,7 @@ private:
   QImage b_img; // contained threshold image in mem
   QStack<QImage> Ctrl_Z, Ctrl_Y;
 
-  pItem sourceItem_from_image;
+  pItem sourceItem;
   pItem titem; // contained threshold image on scene
   pItem track_item; // contained temp image (highlight object)
   pItem randItem; // contained randomize-colored image
